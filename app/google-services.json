@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "595082187332",
+    "firebase_url": "https://mechat-ashis-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "mechat-ashis",
+    "storage_bucket": "mechat-ashis.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595082187332:android:7702e5d23a396454e02211",
+        "android_client_info": {
+          "package_name": "com.kayalprints.mechat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "595082187332-vjhcn5u403cm316jvs41pqutqmo8qdkv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kayalprints.mechat",
+            "certificate_hash": "c7d01b4685fdd68172fb57121419119c54019914"
+          }
+        },
+        {
+          "client_id": "595082187332-63m99j968ukjnlldsohnud30n6felktd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCft07bWr8rncxkeBxh_pnFmoPic3DA-r4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "595082187332-63m99j968ukjnlldsohnud30n6felktd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
