@@ -1,25 +1,23 @@
 package com.kayalprints.mechat;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.MediaStore;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
-import android.annotation.SuppressLint;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.util.Log;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.android.gms.tasks.OnCanceledListener;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -29,9 +27,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -47,27 +45,33 @@ public class ProfileActivity extends AppCompatActivity {
 
     private CircleImageView profileImage;
     private EditText name;
-    private TextView createdDateText;
+    private TextView createdDateText, phoneNoText;
     private ImageView nameEditIcon;
-    private ConstraintLayout signOut;
+    private ConstraintLayout signOut, userNameLay;
+    private ProgressBar progressbarDp;
 
-//    private ArrayList<String> userData;
-    private String[] userData;
+    private ArrayList<String> userData;
+    private Bitmap dp;
 
-    private boolean haveData = false;
+    private boolean haveData, editOn;
 
-    @SuppressLint("SetTextI18n")
+    @SuppressLint({"SetTextI18n", "MissingInflatedId"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setTitle("Profile");
         setContentView(R.layout.activity_profile);
 
+        haveData = getIntent().getBooleanExtra("haveData", false);
+
         profileImage = findViewById(R.id.profileCircleImage);
         name = findViewById(R.id.editTextProfileName);
         createdDateText = findViewById(R.id.textViewCreatedDate);
         nameEditIcon = findViewById(R.id.imageViewEditname);
-        signOut = findViewById(R.id.signout);
+        signOut = findViewById(R.id.signoutlay);
+        userNameLay = findViewById(R.id.userNameLay);
+        progressbarDp = findViewById(R.id.progressbarDp);
+        phoneNoText = findViewById(R.id.textViewPhNo);
 
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
@@ -75,30 +79,20 @@ public class ProfileActivity extends AppCompatActivity {
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
 
-//        userData = new ArrayList<>(3);
-        userData = new String[3];
+        userData = new ArrayList<>(3);
 
         getData();
 
-        if(!haveData) {
-            name.setClickable(true);
-            nameEditIcon.setImageResource(R.drawable.ic_baseline_check);
-            profileImage.setImageResource(R.drawable.ic_baseline_profile);
-        } else {
-            name.setClickable(false);
-            name.setText(userData[0]);
-            nameEditIcon.setImageResource(R.drawable.ic_baseline_edit);
-
-            if(!userData[1].equals("null")) Picasso.get().load(userData[1]).into(profileImage);
-            else profileImage.setImageResource(R.drawable.ic_baseline_profile);
-        }
-        createdDateText.setText(""+userData[2]); // Not working
-
         profileImage.setOnClickListener(v -> profileImageClicked());
+
+        nameEditIcon.setOnClickListener(v -> {
+            String userName = name.getText().toString().trim();
+            editOn = StaticOperations.nameEdition(userName, name, nameEditIcon, editOn, ProfileActivity.this);
+        });
 
         signOut.setOnClickListener(v -> {
             auth.signOut();
-            startActivity(new Intent(ProfileActivity.this, AuthenticationActivity.class));
+            setResult(RESULT_OK, null);
             finish();
         });
 
@@ -109,67 +103,65 @@ public class ProfileActivity extends AppCompatActivity {
         FirebaseUser user = auth.getCurrentUser();
 
         if(user!=null) {
-            databaseReference.child(user.getUid())
-                    .addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            Log.i("ashis", "onDataChange");
+            if(haveData) {
+                databaseReference.child(Objects.requireNonNull(user.getPhoneNumber()))
+                        .addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-                            userData[0] = (Objects.requireNonNull(snapshot.child("name").getValue()).toString());
-                            userData[1] = (Objects.requireNonNull(snapshot.child("dp").getValue()).toString());
-                            userData[2] = (Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
-                            Log.i("ashis","Getting Uid success " + userData[2]);
+                                userData.add((Objects.requireNonNull(snapshot.child("name").getValue()).toString()));
+                                userData.add((Objects.requireNonNull(snapshot.child("dp").getValue()).toString()));
+                                userData.add((Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString()));
 
-                            if (!(userData[0].equals("null"))) haveData = true;
-                            else haveData = false;
-                        }
+                                if (!(userData.get(0).equals("null"))) haveData = true;
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            Log.i("ashis", "onCancelled");
-                        }
-                    });
-//                    .get().addOnCompleteListener(task -> {
-//                        if(task.isSuccessful()) {
-//                            DataSnapshot data = task.getResult();
-//                            Log.i("ashis", "Task successful");
-//
-//                            userData.add(Objects.requireNonNull(data.child("name").getValue()).toString());
-//                            userData.add(Objects.requireNonNull(data.child("dp").getValue()).toString());
-//                            userData.add(Objects.requireNonNull(data.child("DOJoining").getValue()).toString());
-//                            Toast.makeText(this, "Getting Uid success " + userData.get(2), Toast.LENGTH_SHORT).show();
-//
-//                            if (!(userData.get(0).equals("null"))) haveData = true;
-//                            else haveData = false;
-//                        } else {
-//                            Log.i("ashis", "Task not successful");
-//
-//                        }
-//
-//                    })
-//                    .addOnFailureListener(e -> {
-//                        Log.i("ashis", "getting uid data failed");
-//
-//                        Toast.makeText(ProfileActivity.this, "Getting UID failed", Toast.LENGTH_SHORT).show();
-//                    })
-//                    .addOnCanceledListener(() -> {
-//                        Log.i("ashis", "getting uid data canceled");
-//
-//                        Toast.makeText(ProfileActivity.this, "Getting UID canceled", Toast.LENGTH_SHORT).show();
-//                    })
-//                    .addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
-//                        @Override
-//                        public void onSuccess(DataSnapshot dataSnapshot) {
-//                            Log.i("ashis", "onSuccess");
-//
-//                        }
-//                    });
-            Log.i("ashis", "or none hit");
+                                updateData();  // Update should be called after all the data fetched from the server because server needs some time to get the data.
+                                editOn = StaticOperations.nameEdition(userData.get(0), name, nameEditIcon, haveData, ProfileActivity.this);
 
-        } else {
-            Log.i("ashis", "user is null");
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                            }
+                        });
+            } else {
+                name.setEnabled(true);
+                nameEditIcon.setImageResource(R.drawable.ic_baseline_check);
+                profileImage.setImageResource(R.drawable.ic_baseline_profile);
+            }
         }
+    }
 
+    @SuppressLint("SetTextI18n")
+    private void updateData() {
+        if(!haveData) {
+            name.setEnabled(true);
+            nameEditIcon.setImageResource(R.drawable.ic_baseline_check);
+        } else {
+            name.setClickable(false);
+            name.setEnabled(false);
+            name.setText(userData.get(0));
+            nameEditIcon.setImageResource(R.drawable.ic_baseline_edit);
+        }
+        if(!userData.get(1).equals("null")) {
+            new Thread(() -> {
+                try {
+                    dp = Picasso.get().load(userData.get(1)).get();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+            Picasso.get().load(userData.get(1)).into(profileImage);
+        }
+        else profileImage.setImageResource(R.drawable.ic_baseline_profile);
+        progressbarDp.setVisibility(View.INVISIBLE);
+        createdDateText.setText(""+userData.get(2));
+
+        String n = auth.getCurrentUser().getPhoneNumber();
+        phoneNoText.setText(n.substring(3));
+
+//        visibleComponents();
     }
 
     private void profileImageClicked() {
@@ -189,28 +181,29 @@ public class ProfileActivity extends AppCompatActivity {
 
         if(requestCode == 1 && resultCode == RESULT_OK && data != null) {
             Uri imageUri = data.getData();
-            Picasso.get().load(imageUri).into(profileImage);
-            getProfileImageLink(imageUri);
+            try {
+                dp = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                Picasso.get().load(imageUri).into(profileImage);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Selected image getting error", Toast.LENGTH_SHORT).show();
+            }
         }
 
     }
 
-    private String getProfileImageLink(Uri imageUri) {
-        FirebaseUser user = auth.getCurrentUser();
-        String link = "null";
-        storageReference.child(user.getUid()).putFile(imageUri)
-                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                        link =
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(ProfileActivity.this, "Profile image upload failed", Toast.LENGTH_SHORT).show();
-                    }
-                });
-        return link;
+    @Override
+    protected void onDestroy() {
+
+        Bundle b = new Bundle();
+        if(dp != null)
+            b.putByteArray("dp",StaticOperations.getByteArrayImage(dp));
+        userData.remove(0);
+        userData.add(0,name.getText().toString().trim());
+        b.putString("username",userData.get(0));
+
+        StaticOperations.updateDBData(auth.getCurrentUser(), databaseReference, storageReference, b);
+
+        super.onDestroy();
     }
 }
