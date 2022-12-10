@@ -5,12 +5,13 @@
     android:id="@+id/splashLay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SplashActivity">
+    tools:context=".activity.SplashActivity">
 
     <ImageView
         android:id="@+id/splashImage"
         android:layout_width="300dp"
         android:layout_height="300dp"
+        android:contentDescription="App Logo Big"
         android:scaleType="fitXY"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -18,6 +19,36 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.5"
         tools:srcCompat="@drawable/logo" />
+
+    <ImageView
+        android:id="@+id/imageViewRetry"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        app:layout_constraintBottom_toBottomOf="@+id/progressBarSplash"
+        app:layout_constraintEnd_toEndOf="@+id/splashImage"
+        app:layout_constraintStart_toStartOf="@+id/splashImage"
+        app:srcCompat="@drawable/ic_baseline_retry" />
+
+    <ProgressBar
+        android:id="@+id/progressBarSplash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/splashImage" />
+
+    <TextView
+        android:id="@+id/textViewDataError"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:text="TextView"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@+id/splashImage"
+        app:layout_constraintEnd_toEndOf="@+id/splashImage"
+        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintStart_toStartOf="@+id/splashImage" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

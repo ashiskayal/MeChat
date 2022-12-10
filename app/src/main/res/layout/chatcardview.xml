@@ -6,19 +6,20 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="5dp"
-    app:cardCornerRadius="10dp">
+    app:cardBackgroundColor="#00FFFFFF"
+    app:cardCornerRadius="30dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#878787"
+        android:background="@drawable/chatelement"
         android:padding="15dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/circleImageViewCard"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/ic_baseline_profile"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/ic_baseline_profile_black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

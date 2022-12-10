@@ -4,13 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="#A34BFF"
-    app:cardCornerRadius="10dp"
-    tools:context=".AddChatFragment">
+    app:cardBackgroundColor="#00A34BFF"
+    app:cardCornerRadius="30dp"
+    tools:context=".fragment.AddChatFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@drawable/addchatfragdraw"
         android:padding="50dp">
 
         <EditText
@@ -22,9 +23,9 @@
             android:hint="Enter phone number"
             android:inputType="phone"
             android:minHeight="48dp"
-            android:textColor="@color/primary_color"
-            android:textColorHighlight="#FFC107"
-            android:textColorHint="@color/purple_500"
+            android:textColor="@color/white"
+            android:textColorHighlight="#9C27B0"
+            android:textColorHint="@color/white"
             android:textSize="21sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

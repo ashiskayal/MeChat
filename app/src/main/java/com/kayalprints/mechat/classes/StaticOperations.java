@@ -1,4 +1,4 @@
-package com.kayalprints.mechat;
+package com.kayalprints.mechat.classes;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -20,6 +20,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageReference;
+import com.kayalprints.mechat.R;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Objects;
@@ -54,12 +55,25 @@ public class StaticOperations {
                 byte[] image = data.getByteArray("dp");
                 Bitmap imageBitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
 
+
+                storageReference.child(user.getPhoneNumber()).child("profileImage")
+                        .child("40%")
+                        .putBytes(scalingImage(imageBitmap,imageBitmap.getWidth()/2, 40));
+
+                storageReference.child(user.getPhoneNumber()).child("profileImage")
+                        .child("20%")
+                        .putBytes(scalingImage(imageBitmap,imageBitmap.getWidth()/4, 20));
+
+                storageReference.child(user.getPhoneNumber()).child("profileImage")
+                        .child("dp1")
+                        .putBytes(scalingImage(imageBitmap,imageBitmap.getWidth()/10, 10));
+
                 storageReference.child(Objects.requireNonNull(user.getPhoneNumber())).child("profileImage")
                         .child("100%")
                         .putBytes(image)
                         .addOnSuccessListener(taskSnapshot -> {
 
-                            StorageReference imageStorageReference = storageReference.child(user.getPhoneNumber()).child("profileImage").child("40%");
+                            StorageReference imageStorageReference = storageReference.child(user.getPhoneNumber()).child("profileImage").child("dp1");
                             imageStorageReference.getDownloadUrl().addOnSuccessListener(uri -> {
                                 imageLink = uri.toString();
                                 databaseReference.child(user.getPhoneNumber()).child("dp").setValue(imageLink);
@@ -81,17 +95,10 @@ public class StaticOperations {
                             long progress = (100 * snapshot.getBytesTransferred() / snapshot.getTotalByteCount());
 //                            progressBar.setProgress((int) progress);
                         });
-                storageReference.child(user.getPhoneNumber()).child("profileImage")
-                        .child("40%")
-                        .putBytes(scalingImage(imageBitmap,imageBitmap.getWidth()/2, 40));
-
-                storageReference.child(user.getPhoneNumber()).child("profileImage")
-                        .child("20%")
-                        .putBytes(scalingImage(imageBitmap,imageBitmap.getWidth()/4, 20));
             }
 
             databaseReference.child(Objects.requireNonNull(user.getPhoneNumber()))
-                    .child("name").setValue(data.getString("username"))
+                    .child("name").setValue(data.getString("username","default"))
                     .addOnSuccessListener(unused -> {
                         // Create notification here
                     })
@@ -126,26 +133,21 @@ public class StaticOperations {
             h = (int) (w / ratio);
         } else {
             h = maxSize;
-            w = (int) (h / ratio);
+            w = (int) (h * ratio);
         }
         return Bitmap.createScaledBitmap(image,w,h,true);
     }
 
-    public static boolean nameEdition(String userName, EditText name, ImageView nameEditIcon, Boolean editOn, Context c) {
-        if(editOn) {
-            if (userName.equals(""))
-                Toast.makeText(c, "Please enter your name", Toast.LENGTH_SHORT).show();
-            else {
-                nameEditIcon.setImageResource(R.drawable.ic_baseline_edit);
-                editOn = false;
-                name.setEnabled(false);
-                name.clearFocus();
-            }
+    public static boolean nameEdition(String userName, EditText name, ImageView nameEditIcon, boolean editOn, Context c) {
+        if(!editOn) {
+            nameEditIcon.setImageResource(R.drawable.ic_baseline_edit);
+            name.setEnabled(false);
+            name.clearFocus();
         } else {
             nameEditIcon.setImageResource(R.drawable.ic_baseline_check);
-            editOn = true;
             name.setEnabled(true);
         }
+        name.setText(userName);
         return editOn;
     }
 

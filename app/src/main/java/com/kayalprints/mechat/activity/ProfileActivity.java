@@ -1,4 +1,4 @@
-package com.kayalprints.mechat;
+package com.kayalprints.mechat.activity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -6,7 +6,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.view.View;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -27,6 +27,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.kayalprints.mechat.R;
+import com.kayalprints.mechat.classes.StaticOperations;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -42,6 +44,7 @@ public class ProfileActivity extends AppCompatActivity {
     private DatabaseReference databaseReference;
     private FirebaseStorage storage;
     private StorageReference storageReference;
+    private FirebaseUser user;
 
     private CircleImageView profileImage;
     private EditText name;
@@ -53,24 +56,23 @@ public class ProfileActivity extends AppCompatActivity {
     private ArrayList<String> userData;
     private Bitmap dp;
 
-    private boolean haveData, editOn;
+    private boolean editOn;
+    private Boolean haveData;
 
     @SuppressLint({"SetTextI18n", "MissingInflatedId"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().setTitle("Profile");
+        Objects.requireNonNull(getSupportActionBar()).setTitle("Profile");
         setContentView(R.layout.activity_profile);
 
-        haveData = getIntent().getBooleanExtra("haveData", false);
-
-        profileImage = findViewById(R.id.profileCircleImage);
+        profileImage = findViewById(R.id.profileCircleImageNewChat);
         name = findViewById(R.id.editTextProfileName);
         createdDateText = findViewById(R.id.textViewCreatedDate);
         nameEditIcon = findViewById(R.id.imageViewEditname);
         signOut = findViewById(R.id.signoutlay);
         userNameLay = findViewById(R.id.userNameLay);
-        progressbarDp = findViewById(R.id.progressbarDp);
+        progressbarDp = findViewById(R.id.progressbarDpNewChat);
         phoneNoText = findViewById(R.id.textViewPhNo);
 
         auth = FirebaseAuth.getInstance();
@@ -78,6 +80,7 @@ public class ProfileActivity extends AppCompatActivity {
         databaseReference = database.getReference().child("UsersData");
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
+        user = auth.getCurrentUser();
 
         userData = new ArrayList<>(3);
 
@@ -86,13 +89,14 @@ public class ProfileActivity extends AppCompatActivity {
         profileImage.setOnClickListener(v -> profileImageClicked());
 
         nameEditIcon.setOnClickListener(v -> {
+            editOn = !editOn;
             String userName = name.getText().toString().trim();
-            editOn = StaticOperations.nameEdition(userName, name, nameEditIcon, editOn, ProfileActivity.this);
+            StaticOperations.nameEdition(userName, name, nameEditIcon, editOn, ProfileActivity.this);
         });
 
         signOut.setOnClickListener(v -> {
             auth.signOut();
-            setResult(RESULT_OK, null);
+            setResult(RESULT_OK, new Intent());
             finish();
         });
 
@@ -100,68 +104,80 @@ public class ProfileActivity extends AppCompatActivity {
 
 
     private void getData() {
-        FirebaseUser user = auth.getCurrentUser();
 
-        if(user!=null) {
-            if(haveData) {
-                databaseReference.child(Objects.requireNonNull(user.getPhoneNumber()))
-                        .addValueEventListener(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+        assert user != null;
+        DatabaseReference reference = databaseReference.child(Objects.requireNonNull(user.getPhoneNumber()));
+        reference.child("haveData").get().addOnSuccessListener(dataSnapshot -> { // Called if already have data
 
-                                userData.add((Objects.requireNonNull(snapshot.child("name").getValue()).toString()));
-                                userData.add((Objects.requireNonNull(snapshot.child("dp").getValue()).toString()));
-                                userData.add((Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString()));
+            haveData = (Boolean) dataSnapshot.getValue();
+            Log.i("ashis", "in getData-onSuccess have data =  "+haveData);
 
-                                if (!(userData.get(0).equals("null"))) haveData = true;
 
-                                updateData();  // Update should be called after all the data fetched from the server because server needs some time to get the data.
-                                editOn = StaticOperations.nameEdition(userData.get(0), name, nameEditIcon, haveData, ProfileActivity.this);
+            if(haveData != null && haveData) {
+                Log.i("ashis", "entered in if");
 
-                            }
+                reference.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Log.i("ashis", "entered in onDataChange");
 
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-                            }
-                        });
-            } else {
-                name.setEnabled(true);
-                nameEditIcon.setImageResource(R.drawable.ic_baseline_check);
-                profileImage.setImageResource(R.drawable.ic_baseline_profile);
+                        String storedName = Objects.requireNonNull(snapshot.child("name").getValue()).toString();
+                        if(storedName.equals("null"))
+                            editOn = StaticOperations.nameEdition("", name, nameEditIcon, true, ProfileActivity.this);
+                        else
+                            editOn = StaticOperations.nameEdition(storedName, name, nameEditIcon, false, ProfileActivity.this);
+
+                        userData.add(storedName);
+
+                        String dpLink = (Objects.requireNonNull(snapshot.child("dp").getValue()).toString());
+                        if(!dpLink.equals("null"))
+                            Picasso.get().load(dpLink).into(profileImage);
+                        else profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
+                        userData.add(dpLink);
+
+                        String date = (Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
+                        createdDateText.setText(date);
+                        userData.add(date);
+
+                        phoneNoText.setText(Objects.requireNonNull(user.getPhoneNumber()).substring(3));
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.i("ashis", "entered in onCancelled");
+
+                    }
+                });
             }
-        }
-    }
 
-    @SuppressLint("SetTextI18n")
-    private void updateData() {
-        if(!haveData) {
-            name.setEnabled(true);
-            nameEditIcon.setImageResource(R.drawable.ic_baseline_check);
-        } else {
-            name.setClickable(false);
-            name.setEnabled(false);
-            name.setText(userData.get(0));
-            nameEditIcon.setImageResource(R.drawable.ic_baseline_edit);
-        }
-        if(!userData.get(1).equals("null")) {
-            new Thread(() -> {
-                try {
-                    dp = Picasso.get().load(userData.get(1)).get();
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+
+        }).addOnFailureListener(e -> {
+
+            haveData = false;
+            Log.i("ashis", "in getData-onFail have data =  "+ false);
+
+            editOn = StaticOperations.nameEdition("",name,nameEditIcon,true,ProfileActivity.this);
+
+            profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
+
+            reference.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    createdDateText.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
                 }
-            }).start();
 
-            Picasso.get().load(userData.get(1)).into(profileImage);
-        }
-        else profileImage.setImageResource(R.drawable.ic_baseline_profile);
-        progressbarDp.setVisibility(View.INVISIBLE);
-        createdDateText.setText(""+userData.get(2));
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
+            });
 
-        String n = auth.getCurrentUser().getPhoneNumber();
-        phoneNoText.setText(n.substring(3));
+        });
 
-//        visibleComponents();
+
+        Log.i("ashis", "after if");
+
     }
 
     private void profileImageClicked() {
@@ -202,7 +218,7 @@ public class ProfileActivity extends AppCompatActivity {
         userData.add(0,name.getText().toString().trim());
         b.putString("username",userData.get(0));
 
-        StaticOperations.updateDBData(auth.getCurrentUser(), databaseReference, storageReference, b);
+        StaticOperations.updateDBData(user, databaseReference, storageReference, b);
 
         super.onDestroy();
     }

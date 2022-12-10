@@ -2,18 +2,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MeChat"
         tools:targetApi="31">
+
         <activity
-            android:name=".ProfileDataSetOnceActivity"
+            android:name=".activity.ProfileDataSetOnceActivity"
             android:exported="false"
             android:label="@string/title_activity_profile_data_set_once"
             android:theme="@style/Theme.MeChat.NoActionBar">
@@ -22,23 +29,23 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".SettingActivity"
+            android:name=".activity.SettingActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".activity.MainActivity">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
         <activity
-            android:name=".ProfileActivity"
+            android:name=".activity.ProfileActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".activity.MainActivity">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
         <activity
-            android:name=".SplashActivity"
+            android:name=".activity.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.MeChat.noActionBar">
             <intent-filter>
@@ -52,7 +59,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".AuthenticationActivity"
+            android:name=".activity.AuthenticationActivity"
             android:exported="false"
             android:theme="@style/Theme.MeChat.noActionBar">
             <meta-data
@@ -60,7 +67,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:exported="false">
             <meta-data
                 android:name="android.app.lib_name"

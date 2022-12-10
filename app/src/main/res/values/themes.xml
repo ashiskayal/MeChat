@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Base application theme. -->
     <style name="Theme.MeChat" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
@@ -38,4 +38,5 @@
 
     <style name="Theme.MeChat.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="fab"/>
 </resources>

@@ -1,4 +1,4 @@
-package com.kayalprints.mechat;
+package com.kayalprints.mechat.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.kayalprints.mechat.R;
+import com.kayalprints.mechat.classes.User;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -34,13 +36,34 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
     }
 
     @Override
+    public void onViewAttachedToWindow(@NonNull ChatsViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+
+        holder.card.setTranslationX(300);
+        holder.card.setTranslationY(-50);
+        holder.card.setScaleX(0);
+        holder.card.setScaleY(0);
+        holder.card.setAlpha(0);
+        holder.card.animate().translationX(0).translationY(0)
+                .alpha(1)
+                .scaleX(1).scaleY(1)
+                .setDuration(500).setStartDelay(200).start();
+
+    }
+
+    @Override
     public void onBindViewHolder(@NonNull ChatsViewHolder holder, int position) {
         String dpLink = chats.get(position).getDpLink();
+        String userName = chats.get(position).getUserName();
+        String phNo = chats.get(position).getPhNumber();
+
         if(!dpLink.equals("null"))
             Picasso.get().load(dpLink).into(holder.image);
-        else holder.image.setImageResource(R.drawable.ic_baseline_profile);
+        else holder.image.setImageResource(R.drawable.ic_baseline_profile_black);
 
-        holder.name.setText(chats.get(position).getUserName());
+        if (userName.equals("null")) holder.name.setText(phNo);
+        else holder.name.setText(userName);
+
     }
 
     @Override
@@ -52,13 +75,14 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
 
         private final CircleImageView image;
         private final TextView name;
+        CardView card;
 
         public ChatsViewHolder(@NonNull View itemView) {
             super(itemView);
 
             image = itemView.findViewById(R.id.circleImageViewCard);
             name = itemView.findViewById(R.id.textViewNameCard);
-            CardView card = itemView.findViewById(R.id.card);
+            card = itemView.findViewById(R.id.card);
 
             card.setOnClickListener(v -> {
 

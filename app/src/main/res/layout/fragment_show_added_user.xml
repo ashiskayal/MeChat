@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#00ffffff"
+    app:cardCornerRadius="30dp"
+    tools:context=".fragment.ShowAddedUserFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/addchatfragdraw"
+        android:padding="30dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/profileCircleImageNewChat"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:background="@drawable/inputtext"
+            android:padding="10dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_baseline_profile_black"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.497"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:layout_editor_absoluteY="50dp" />
+
+        <TextView
+            android:id="@+id/nameNewChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:fontFamily="casual"
+            android:text="0000000000"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profileCircleImageNewChat" />
+
+        <ImageView
+            android:id="@+id/imageViewNewChat"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="52dp"
+            android:src="@drawable/ic_baseline_textsms_white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/nameNewChat" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.cardview.widget.CardView>

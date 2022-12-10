@@ -1,11 +1,12 @@
-package com.kayalprints.mechat;
+package com.kayalprints.mechat.activity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.widget.Button;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -25,6 +26,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.kayalprints.mechat.R;
+import com.kayalprints.mechat.classes.StaticOperations;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -39,18 +42,21 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
     private TextView createdDateText;
     private ImageView nameEditIcon;
     private ConstraintLayout userNameLay;
-    private Button btnContinue;
+    private ImageView imgContinue;
 
     private FirebaseAuth auth;
     private FirebaseDatabase database;
     private DatabaseReference databaseReference;
     private FirebaseStorage storage;
     private StorageReference storageReference;
+    private FirebaseUser user;
 
-    private boolean editOn, haveData;
+    private boolean editOn;
+    private Boolean haveData;
     private String userName;
     private Bitmap dp;
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,73 +67,96 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
         createdDateText = findViewById(R.id.textViewCreatedDateOnce);
         nameEditIcon = findViewById(R.id.imageViewEditnameOnce);
         userNameLay = findViewById(R.id.userNameLayOnce);
-        btnContinue = findViewById(R.id.buttonContinue);
-        btnContinue.setBackgroundResource(R.drawable.ic_baseline_right);
+        imgContinue = findViewById(R.id.imageContinue);
+        imgContinue.setBackgroundResource(R.drawable.ic_baseline_right);
 
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference().child("UsersData");
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
+        user = auth.getCurrentUser();
 
-        Intent i = getIntent();
-        haveData = i.getBooleanExtra("haveData",false);
-        getData(i);
+        getData();
 
         nameEditIcon.setOnClickListener(v -> {
+            editOn = !editOn;
             userName = name.getText().toString().trim();
-            editOn = StaticOperations.nameEdition(userName, name, nameEditIcon, editOn, ProfileDataSetOnceActivity.this);
+            StaticOperations.nameEdition(userName, name, nameEditIcon, editOn, ProfileDataSetOnceActivity.this);
         });
 
         profileImage.setOnClickListener(v -> profileImageClicked());
 
-        btnContinue.setOnClickListener(v -> {
-            if(editOn || userName == null) userName = name.getText().toString().trim();
-            Intent intent = new Intent(ProfileDataSetOnceActivity.this, MainActivity.class);
-            if(!userName.isEmpty()) haveData = true;
-            intent.putExtra("haveData",haveData);
-            startActivity(intent);
+        imgContinue.setOnClickListener(v -> {
+            if(editOn || userName == null || userName.isEmpty()) userName = name.getText().toString().trim();
+            startActivity(new Intent(ProfileDataSetOnceActivity.this, MainActivity.class));
             finish();
         });
-
     }
 
 
-    private void getData(Intent i) {
-        if(haveData) {
-            FirebaseUser user = auth.getCurrentUser();
+    private void getData() {
 
-            if(user!=null) {
-                databaseReference.child(Objects.requireNonNull(user.getPhoneNumber()))
-                        .addValueEventListener(new ValueEventListener() {
+        DatabaseReference reference = databaseReference.child(Objects.requireNonNull(user.getPhoneNumber()));
+        reference.child("haveData").get().addOnSuccessListener(dataSnapshot -> { // Called if already have data
+
+            haveData = (Boolean) dataSnapshot.getValue();
+            Log.i("ashis", "in getData-onSuccess have data =  "+haveData);
+
+
+            if(haveData != null && haveData) {
+                reference.addValueEventListener(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
-                                name.setEnabled(false);
-                                name.setText(Objects.requireNonNull(snapshot.child("name").getValue()).toString());
+                                String storedName = Objects.requireNonNull(snapshot.child("name").getValue()).toString();
+                                if(storedName.equals("null"))
+                                    editOn = StaticOperations.nameEdition("", name, nameEditIcon, true, ProfileDataSetOnceActivity.this);
+                                else
+                                    editOn = StaticOperations.nameEdition(storedName, name, nameEditIcon, false, ProfileDataSetOnceActivity.this);
+
+
                                 String dpLink = (Objects.requireNonNull(snapshot.child("dp").getValue()).toString());
                                 if(!dpLink.equals("null"))
                                     Picasso.get().load(dpLink).into(profileImage);
-                                else profileImage.setImageResource(R.drawable.ic_baseline_profile);
+                                else profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
 
-                                createdDateText.setText(i.getStringExtra("createdDate"));
+                                createdDateText.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
 
-                                StaticOperations.nameEdition(name.getText().toString(), name, nameEditIcon, true, ProfileDataSetOnceActivity.this);
                             }
 
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {
+                                Log.i("ashis", "onCancelled in getData");
                             }
                         });
             }
 
-            return;
-        }
-        name.setEnabled(true);
-        nameEditIcon.setImageResource(R.drawable.ic_baseline_check);
-        editOn = true;
-        profileImage.setImageResource(R.drawable.ic_baseline_profile);
-        createdDateText.setText(i.getStringExtra("createdDate"));
+
+        }).addOnFailureListener(e -> {
+
+            haveData = false;
+            Log.i("ashis", "in getData-onFail have data =  "+false);
+
+
+            editOn = StaticOperations.nameEdition("",name,nameEditIcon,true,ProfileDataSetOnceActivity.this);
+
+            profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
+
+            reference.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            createdDateText.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                        }
+                    });
+
+
+        });
+
     }
 
     private void profileImageClicked() {
@@ -164,11 +193,12 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
         Bundle b = new Bundle();
         if (dp != null) {
             b.putByteArray("dp", StaticOperations.getByteArrayImage(dp));
+            userName = name.getText().toString().trim();
             b.putString("username", userName);
 
-            StaticOperations.updateDBData(auth.getCurrentUser(), databaseReference, storageReference, b);
-
-            super.onDestroy();
+            Log.i("ashis","in destroy : "+b.getString("username"));
+            StaticOperations.updateDBData(user, databaseReference, storageReference, b);
         }
+        super.onDestroy();
     }
 }

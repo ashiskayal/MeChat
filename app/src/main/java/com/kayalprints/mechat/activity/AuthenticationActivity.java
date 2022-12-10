@@ -1,4 +1,4 @@
-package com.kayalprints.mechat;
+package com.kayalprints.mechat.activity;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -24,6 +25,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.kayalprints.mechat.R;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,6 +37,7 @@ public class AuthenticationActivity extends AppCompatActivity {
     private EditText phoneNumber, otp;
     private Button getCode, verify;
     private ProgressBar progressBar;
+    private ImageView logo;
 
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -67,9 +70,16 @@ public class AuthenticationActivity extends AppCompatActivity {
         getCode = findViewById(R.id.buttonGetCode);
         verify = findViewById(R.id.buttonVerifyCode);
         progressBar = findViewById(R.id.progressbarAuth);
+        logo = findViewById(R.id.imageViewLogo);
         progressBar.setVisibility(View.INVISIBLE);
 
+
+        getCode.setBackgroundResource(R.drawable.inputbutton);
+
+        setAnimations();
+
         getCode.setOnClickListener(view -> {
+            getCode.setClickable(false);
             progressBar.setVisibility(View.VISIBLE);
             String phNo = phoneNumber.getText().toString().trim();
             if(!phNo.isEmpty())
@@ -80,6 +90,7 @@ public class AuthenticationActivity extends AppCompatActivity {
         verify.setOnClickListener(view -> {
             progressBar.setVisibility(View.VISIBLE);
             signWithPhoneCode();
+            getCode.setClickable(true);
         });
 
 
@@ -105,6 +116,7 @@ public class AuthenticationActivity extends AppCompatActivity {
         @Override
         public void onVerificationFailed(@NonNull FirebaseException e) {
             Toast.makeText(AuthenticationActivity.this, "Code can't sent", Toast.LENGTH_SHORT).show();
+            getCode.setClickable(true);
         }
 
         @Override
@@ -144,35 +156,59 @@ public class AuthenticationActivity extends AppCompatActivity {
 
         if(user != null) {
             DatabaseReference reference = databaseReference.child(Objects.requireNonNull(user.getPhoneNumber()));
-
             reference.child("haveData").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     haveData = (Boolean) snapshot.getValue();
+                    Log.i("ashis", "in createDB-onSuccess have data =  "+haveData);
+
+                    if(haveData == null || !haveData) setDefaultValue(reference); // If there is no haveData object in DB then haveData is not created tp its a null object
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
+                    haveData = false;
+                    Log.i("ashis", "in createDB-onFail have data =  "+haveData);
+
+                    setDefaultValue(reference);
                 }
             });
-
-            if(!haveData) {
-                reference.child("haveData").setValue(true)
-                        .addOnFailureListener(e -> Toast.makeText(AuthenticationActivity.this, "User Database creation failed", Toast.LENGTH_SHORT).show());
-                reference.child("name").setValue("null");
-                reference.child("dp").setValue("null");
-                createdTime = getNowDate();
-                reference.child("DOJoining").setValue(createdTime);
-            }
         }
-        i.putExtra("haveData", haveData);
         return i;
+    }
+
+    private void setDefaultValue(DatabaseReference reference) {
+        reference.child("haveData").setValue(true)
+                .addOnFailureListener(ei -> Toast.makeText(AuthenticationActivity.this, "User Database creation failed", Toast.LENGTH_SHORT).show());
+        reference.child("name").setValue("null");
+        reference.child("dp").setValue("null");
+        createdTime = getNowDate();
+        reference.child("DOJoining").setValue(createdTime);
     }
 
     private String getNowDate() {
         LocalDateTime time = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E, dd MMMM yyyy, HH:mm:ss");
         return time.format(formatter);
+    }
+
+    private void setAnimations() {
+        phoneNumber.setTranslationX(-300);
+        getCode.setTranslationX(300);
+        otp.setTranslationX(-300);
+        verify.setTranslationX(300);
+
+        getCode.setAlpha(0);
+        verify.setAlpha(0);
+        phoneNumber.setAlpha(0);
+        otp.setAlpha(0);
+
+        long duration = 1000;
+
+        getCode.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
+        verify.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
+        phoneNumber.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
+        otp.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
     }
 
     @Override
