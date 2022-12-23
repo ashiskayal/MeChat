@@ -1,12 +1,17 @@
-package com.kayalprints.mechat.activity;
+package com.kayalprints.mechat.fragment;
 
-import android.annotation.SuppressLint;
+import static android.app.Activity.RESULT_OK;
+
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -15,8 +20,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -28,6 +33,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.kayalprints.mechat.R;
+import com.kayalprints.mechat.activity.ProfileActivity;
 import com.kayalprints.mechat.classes.MeChatDatabase;
 import com.kayalprints.mechat.classes.Operations;
 import com.squareup.picasso.Picasso;
@@ -38,11 +44,7 @@ import java.util.Objects;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class ProfileActivity extends AppCompatActivity {
-
-    private DatabaseReference databaseReference;
-    private StorageReference storageReference;
-    private FirebaseUser user;
+public class MyAccountFragment extends Fragment {
 
     private CircleImageView profileImage;
     private EditText name;
@@ -57,21 +59,36 @@ public class ProfileActivity extends AppCompatActivity {
     private boolean editOn;
     private Boolean haveData;
 
-    @SuppressLint({"SetTextI18n", "MissingInflatedId"})
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Objects.requireNonNull(getSupportActionBar()).setTitle("Profile");
-        setContentView(R.layout.activity_profile);
+    private DatabaseReference databaseReference;
+    private StorageReference storageReference;
+    private FirebaseUser user;
 
-        profileImage = findViewById(R.id.profileCircleImageNewChat);
-        name = findViewById(R.id.editTextProfileName);
-        createdDateText = findViewById(R.id.textViewCreatedDate);
-        nameEditIcon = findViewById(R.id.imageViewEditname);
-        signOut = findViewById(R.id.signoutlay);
-        userNameLay = findViewById(R.id.userNameLay);
-        progressbarDp = findViewById(R.id.progressbarDpNewChat);
-        phoneNoText = findViewById(R.id.textViewPhNo);
+    private MyAccountFragment(DatabaseReference dReference, StorageReference sReference, FirebaseUser usr) {
+        databaseReference = dReference;
+        storageReference = sReference;
+        user = usr;
+    }
+
+    public static MyAccountFragment getInstance(FirebaseDatabase database, FirebaseStorage storage, FirebaseAuth auth) {
+        return new MyAccountFragment(database.getReference().child("UserData"), storage.getReference(), auth.getCurrentUser());
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        View v = inflater.inflate(R.layout.activity_profile, container, false);
+
+        profileImage = v.findViewById(R.id.profileCircleImageNewChat);
+        name = v.findViewById(R.id.editTextProfileName);
+        createdDateText = v.findViewById(R.id.textViewCreatedDate);
+        nameEditIcon = v.findViewById(R.id.imageViewEditname);
+        signOut = v.findViewById(R.id.signoutlay);
+        userNameLay = v.findViewById(R.id.userNameLay);
+        progressbarDp = v.findViewById(R.id.progressbarDpNewChat);
+        phoneNoText = v.findViewById(R.id.textViewPhNo);
+
+        signOut.setVisibility(View.INVISIBLE);
 
         DatabaseReference df = MeChatDatabase.getDatabaseReference();
         if(df != null) databaseReference = df.child("UsersData");
@@ -82,22 +99,44 @@ public class ProfileActivity extends AppCompatActivity {
 
         getData();
 
-        profileImage.setOnClickListener(v -> profileImageClicked());
+        profileImage.setOnClickListener(view -> profileImageClicked());
 
-        nameEditIcon.setOnClickListener(v -> {
+        nameEditIcon.setOnClickListener(view -> {
             editOn = !editOn;
             String userName = name.getText().toString().trim();
-            Operations.nameEdition(userName, name, nameEditIcon, editOn, ProfileActivity.this);
+            Operations.nameEdition(userName, name, nameEditIcon, editOn, getContext());
         });
 
-        signOut.setOnClickListener(v -> {
-            MeChatDatabase.getAuth().signOut(); // Null check
-            setResult(RESULT_OK, new Intent());
-            finish();
-        });
 
+        return v;
     }
 
+    private void profileImageClicked() {
+        profileImageChooser();
+    }
+
+    private void profileImageChooser() {
+        Intent i = new Intent();
+        i.setType("image/*");
+        i.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(i,1);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == 1 && resultCode == RESULT_OK && data != null) {
+            Uri imageUri = data.getData();
+            try {
+                dp = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), imageUri);
+                Picasso.get().load(imageUri).into(profileImage);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(getContext(), "Selected image getting error", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     private void getData() {
 
@@ -119,9 +158,9 @@ public class ProfileActivity extends AppCompatActivity {
 
                             String storedName = Objects.requireNonNull(snapshot.child("name").getValue()).toString();
                             if (storedName.equals("null"))
-                                editOn = Operations.nameEdition("", name, nameEditIcon, true, ProfileActivity.this);
+                                editOn = Operations.nameEdition("", name, nameEditIcon, true, getContext());
                             else
-                                editOn = Operations.nameEdition(storedName, name, nameEditIcon, false, ProfileActivity.this);
+                                editOn = Operations.nameEdition(storedName, name, nameEditIcon, false, getContext());
 
                             userData.add(storedName);
 
@@ -154,7 +193,7 @@ public class ProfileActivity extends AppCompatActivity {
                 haveData = false;
                 Log.i("ashis", "in getData-onFail have data =  " + false);
 
-                editOn = Operations.nameEdition("", name, nameEditIcon, true, ProfileActivity.this);
+                editOn = Operations.nameEdition("", name, nameEditIcon, true, getContext());
 
                 profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
 
@@ -171,41 +210,31 @@ public class ProfileActivity extends AppCompatActivity {
 
             });
         } catch (NullPointerException e) {
-            Toast.makeText(this, "Can't make operation due to internal error", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Can't make operation due to internal error", Toast.LENGTH_SHORT).show();
         }
 
     }
 
-    private void profileImageClicked() {
-        profileImageChooser();
-    }
 
-    private void profileImageChooser() {
-        Intent i = new Intent();
-        i.setType("image/*");
-        i.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(i,1);
+    @Override
+    public void onStart() {
+        Log.i("fragDebug","OnStart");
+
+        super.onStart();
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public void onStop() {
+        Log.i("fragDebug","OnStop");
 
-        if(requestCode == 1 && resultCode == RESULT_OK && data != null) {
-            Uri imageUri = data.getData();
-            try {
-                dp = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                Picasso.get().load(imageUri).into(profileImage);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Selected image getting error", Toast.LENGTH_SHORT).show();
-            }
-        }
-
+        super.onStop();
     }
 
     @Override
-    protected void onDestroy() {
+    public void onPause() {
+
+        Log.i("fragDebug","OnPause");
+
 
         Bundle b = new Bundle();
         if(dp != null)
@@ -216,9 +245,9 @@ public class ProfileActivity extends AppCompatActivity {
         try {
             Operations.updateDBData(user, databaseReference, storageReference, b);
         } catch (NullPointerException e) {
-            Toast.makeText(this, "Can't make operation due to internal error", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Can't make operation due to internal error", Toast.LENGTH_SHORT).show();
         }
 
-        super.onDestroy();
+        super.onPause();
     }
 }

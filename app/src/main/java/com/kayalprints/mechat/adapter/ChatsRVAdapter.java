@@ -22,6 +22,8 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
 
     private final Context c;
     private final List<User> chats;
+    private onItemClickListener listener;
+    private onItemLongClickListener longListener;
 
     public ChatsRVAdapter(List<User> users, Context c) {
         this.chats = users;
@@ -36,8 +38,18 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
     }
 
     @Override
-    public void onViewAttachedToWindow(@NonNull ChatsViewHolder holder) {
-        super.onViewAttachedToWindow(holder);
+    public void onBindViewHolder(@NonNull ChatsViewHolder holder, int position) {
+        String dpLink = chats.get(position).getDpLink();
+        String userName = chats.get(position).getUserName();
+        String phNo = chats.get(position).getPhNumber();
+
+        if(!dpLink.equals("null"))
+            Picasso.get().load(dpLink).into(holder.image);
+//        else holder.image.setImageResource(R.drawable.ic_baseline_profile_white); // This line is not needed because this
+                                                                                        // default image resource is already set in design.
+
+        if (userName.equals("null")) holder.name.setText(phNo);
+        else holder.name.setText(userName);
 
         holder.card.setTranslationX(300);
         holder.card.setTranslationY(-50);
@@ -52,26 +64,11 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ChatsViewHolder holder, int position) {
-        String dpLink = chats.get(position).getDpLink();
-        String userName = chats.get(position).getUserName();
-        String phNo = chats.get(position).getPhNumber();
-
-        if(!dpLink.equals("null"))
-            Picasso.get().load(dpLink).into(holder.image);
-        else holder.image.setImageResource(R.drawable.ic_baseline_profile_black);
-
-        if (userName.equals("null")) holder.name.setText(phNo);
-        else holder.name.setText(userName);
-
-    }
-
-    @Override
     public int getItemCount() {
         return chats.size();
     }
 
-    public static class ChatsViewHolder extends RecyclerView.ViewHolder {
+    public class ChatsViewHolder extends RecyclerView.ViewHolder {
 
         private final CircleImageView image;
         private final TextView name;
@@ -84,11 +81,46 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
             name = itemView.findViewById(R.id.textViewNameCard);
             card = itemView.findViewById(R.id.card);
 
-            card.setOnClickListener(v -> {
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int position = getAdapterPosition();
+                    if(listener != null && position != RecyclerView.NO_POSITION)
+                        listener.onItemClick(chats.get(position));
+                }
+            });
 
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+
+                    int position = getAdapterPosition();
+                    if(longListener != null && position != RecyclerView.NO_POSITION)
+                        longListener.onItemLongClick(position, v);
+
+                    return false;
+                }
             });
 
         }
+    }
+
+
+
+    public interface onItemClickListener {
+        void onItemClick(User user);
+    }
+
+    public interface onItemLongClickListener {
+        void onItemLongClick(int pos, View v);
+    }
+
+    public void setOnItemClickListener(onItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    public void setOnItemLongClickListener(onItemLongClickListener listener) {
+        this.longListener = listener;
     }
 
 }

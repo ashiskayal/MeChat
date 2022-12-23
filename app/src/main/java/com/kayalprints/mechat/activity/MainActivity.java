@@ -1,64 +1,54 @@
 package com.kayalprints.mechat.activity;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
-import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.IdRes;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentContainerView;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
-import com.kayalprints.mechat.fragment.AddChatFragment;
+import com.google.firebase.storage.FirebaseStorage;
 import com.kayalprints.mechat.R;
-import com.kayalprints.mechat.classes.User;
-import com.kayalprints.mechat.adapter.ChatsRVAdapter;
+import com.kayalprints.mechat.classes.MeChatDatabase;
+import com.kayalprints.mechat.fragment.AddChatFragment;
+import com.kayalprints.mechat.fragment.ChatsFragment;
+import com.kayalprints.mechat.fragment.MyAccountFragment;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView chatsRv;
-    private static ChatsRVAdapter adapter;
+    private static final int ALLCHATS = 35, ADDUSER = 36, MYACCOUNT = 37;
+    private static int currentFrag;
 
     private FloatingActionButton addChat;
 
     private ImageView allChats, addUser, myAccount;
-
-    private static List<User> chats;
+    private FragmentContainerView containerView;
 
     private ActivityResultLauncher<Intent> activityResultLauncherForProfile;
 
@@ -71,28 +61,74 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i("mainActivityCheck","OnCreate");
 
+        MeChatDatabase.setMeChatDatabase(FirebaseDatabase.getInstance(), FirebaseStorage.getInstance(), FirebaseAuth.getInstance());
+
         if(checkPermission()) requestPermission();
 
-        chats = new ArrayList<>();
+//        ChatDataHolder.addChat(new User("Default User2", "null", "8888888888"));
+
         registerActivityLauncher();
 
-        chatsRv = findViewById(R.id.recyclerViewChats);
+
         addChat = findViewById(R.id.floatingActionAddChat);
         allChats = findViewById(R.id.imageViewOptionsChats);
         addUser = findViewById(R.id.imageViewOptionsAddChat);
         myAccount = findViewById(R.id.imageViewOptionsAccount);
+        containerView = findViewById(R.id.mainFragmentContainerView);
 
-        chatsRv.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        adapter = new ChatsRVAdapter(chats,MainActivity.this);
-        chatsRv.setAdapter(adapter);
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ChatsFragment chatsFragment = new ChatsFragment();
 
-        addChat.setImageResource(R.drawable.ic_baseline_person_add_white);
+        ft.add(R.id.mainFragmentContainerView,chatsFragment);
+        ft.commit();
 
-        allChats.setOnClickListener(v -> changeImageOpacity(allChats, addUser, myAccount));
-        addUser.setOnClickListener(v -> changeImageOpacity(addUser, allChats, myAccount));
-        myAccount.setOnClickListener(v -> changeImageOpacity(myAccount, allChats, addUser));
+        MainActivity.currentFrag = MainActivity.ALLCHATS;
 
+        allChats.setOnClickListener(v -> {
+            if(MainActivity.currentFrag != MainActivity.ALLCHATS) {
+                changeImageOpacity(allChats, addUser, myAccount);
 
+                ChatsFragment fragment = new ChatsFragment();
+
+                FragmentManager manager = getSupportFragmentManager();
+                showFragment(manager, "chats", fragment, R.id.mainFragmentContainerView);
+                hideFragments(manager, "myaccount", "adduser");
+
+                MainActivity.currentFrag = MainActivity.ALLCHATS;
+            }
+        });
+
+        addUser.setOnClickListener(v -> {
+            if(MainActivity.currentFrag != MainActivity.ADDUSER) {
+                changeImageOpacity(addUser, allChats, myAccount);
+
+                AddChatFragment fragment = AddChatFragment.getInstance(FirebaseDatabase.getInstance().getReference());
+
+                FragmentManager manager = getSupportFragmentManager();
+                showFragment(manager, "adduser", fragment, R.id.mainFragmentContainerView);
+                hideFragments(manager, "myaccount", "chats");
+
+                MainActivity.currentFrag = MainActivity.ADDUSER;
+            }
+        });
+
+        myAccount.setOnClickListener(v -> {
+            if(MainActivity.currentFrag != MainActivity.MYACCOUNT) {
+                changeImageOpacity(myAccount, allChats, addUser);
+
+                MyAccountFragment fragment = MyAccountFragment.getInstance(
+                        FirebaseDatabase.getInstance(), FirebaseStorage.getInstance(), FirebaseAuth.getInstance()
+                );
+
+                FragmentManager manager = getSupportFragmentManager();
+                showFragment(manager, "myaccount", fragment, R.id.mainFragmentContainerView);
+                hideFragments(manager, "adduser", "chats");
+
+                MainActivity.currentFrag = MainActivity.MYACCOUNT;
+            }
+        });
+
+/**
         addChat.setOnClickListener(v -> {
             // Code to change the constraint values
             ConstraintLayout constraintLayout = findViewById(R.id.mainLayout);
@@ -102,11 +138,10 @@ public class MainActivity extends AppCompatActivity {
             constraintSet.applyTo(constraintLayout);
             //--------------
 
-            FragmentManager fm = getSupportFragmentManager();
             DialogFragment fragment = new AddChatFragment(FirebaseDatabase.getInstance().getReference().child("UsersData"));
-            fragment.show(fm, "AddChatFragment");
+            fragment.show(getSupportFragmentManager(), "AddChatFragment");
         });
-
+**/
 //        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 //        if(imm.isAcceptingText()) Log.i("mainActivityCheck","keyboard is on.");
 //        else Log.i("mainActivityCheck","keyboard is not on.");
@@ -179,48 +214,27 @@ public class MainActivity extends AppCompatActivity {
         return (readPermission == PackageManager.PERMISSION_GRANTED && writePermission == PackageManager.PERMISSION_GRANTED);
     }
 
-
-    @SuppressLint("NotifyDataSetChanged")
-    public static void updateChatList(User user) {
-        chats.add(0,user);
-        adapter.notifyDataSetChanged();
-    }
-
     private void changeImageOpacity(ImageView selectedImage, ImageView... anotherImages) {
         selectedImage.animate().alpha(1).setDuration(500).start();
         for(ImageView i : anotherImages) i.animate().alpha(0.5F).setDuration(500).start();
     }
 
-    @Override
-    protected void onStart() {
-        Log.i("mainActivityCheck","OnStart");
-        super.onStart();
+
+    private void showFragment(FragmentManager manager, String fragmentTag, Fragment fragment, @IdRes int containerViewId) {
+        if(manager.findFragmentByTag(fragmentTag) != null) {
+            manager.beginTransaction()
+                    .show(Objects.requireNonNull(manager.findFragmentByTag(fragmentTag))).commit();
+        } else manager.beginTransaction().add(containerViewId,fragment, fragmentTag).commit();
     }
 
-    @Override
-    protected void onPause() {
-        Log.i("mainActivityCheck","OnPause");
-        super.onPause();
+    private void hideFragments(FragmentManager manager, String tag1, String tag2) {
+        if(manager.findFragmentByTag(tag1) != null)
+            manager.beginTransaction()
+                    .hide(Objects.requireNonNull(manager.findFragmentByTag(tag1))).commit();
+
+        if(manager.findFragmentByTag(tag2) != null)
+            manager.beginTransaction()
+                    .hide(Objects.requireNonNull(manager.findFragmentByTag(tag2))).commit();
     }
 
-    @Override
-    protected void onResume() {
-        Log.i("mainActivityCheck","OnResume");
-        super.onResume();
-    }
-
-    @Override
-    protected void onRestart() {
-        Log.i("mainActivityCheck","onRestart");
-        super.onRestart();
-    }
-
-    @Override
-    protected void onDestroy() {
-        Log.i("mainActivityCheck","OnDestroy");
-
-
-
-        super.onDestroy();
-    }
 }

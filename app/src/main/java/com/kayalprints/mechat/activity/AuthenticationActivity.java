@@ -26,6 +26,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.kayalprints.mechat.R;
+import com.kayalprints.mechat.classes.Operations;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -81,7 +82,7 @@ public class AuthenticationActivity extends AppCompatActivity {
         getCode.setOnClickListener(view -> {
             getCode.setClickable(false);
             progressBar.setVisibility(View.VISIBLE);
-            String phNo = phoneNumber.getText().toString().trim();
+            String phNo = Operations.extractPhoneNumber(phoneNumber.getText().toString().trim());
             if(!phNo.isEmpty())
                 sendCode("+91"+phNo);
             else Toast.makeText(AuthenticationActivity.this, "Please enter your phone number", Toast.LENGTH_SHORT).show();
@@ -205,10 +206,10 @@ public class AuthenticationActivity extends AppCompatActivity {
 
         long duration = 1000;
 
-        getCode.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
-        verify.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
-        phoneNumber.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
-        otp.animate().translationX(0).alpha((float) 1).setDuration(duration).setStartDelay(500).start();
+        getCode.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
+        verify.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
+        phoneNumber.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
+        otp.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
     }
 
     @Override

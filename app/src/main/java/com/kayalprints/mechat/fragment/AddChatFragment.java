@@ -11,29 +11,33 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.kayalprints.mechat.R;
+import com.kayalprints.mechat.classes.MeChatDatabase;
+import com.kayalprints.mechat.classes.Operations;
 
 import java.util.Objects;
 
-public class AddChatFragment extends DialogFragment {
+public class AddChatFragment extends Fragment {
 
     private EditText phNo;
     private Button find;
-
-    private DatabaseReference databaseReference;
+    private final DatabaseReference databaseReference;
 
     private Boolean haveData;
 
-    public AddChatFragment(DatabaseReference reference) {
-        this.databaseReference = reference;
+    private AddChatFragment(DatabaseReference databaseReference) {
+        this.databaseReference = databaseReference.child("UsersData");
     }
 
+    public static AddChatFragment getInstance(DatabaseReference reference) {
+        return new AddChatFragment(reference);
+    }
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -45,13 +49,13 @@ public class AddChatFragment extends DialogFragment {
         find = v.findViewById(R.id.buttonAddChatFrag);
 
         find.setOnClickListener(a -> {
-            String phNum = phNo.getText().toString().trim();
+            String phNum = Operations.extractPhoneNumber(phNo.getText().toString().trim());
+            Toast.makeText(getContext(), "Entered ph number is : "+phNum, Toast.LENGTH_LONG).show();
+
             if(phNum.isEmpty())
                 Toast.makeText(requireContext(), "Please enter your friend's phone number.", Toast.LENGTH_SHORT).show();
-            else {
-                if(phNum.startsWith("+91")) findUser(phNum);
-                else findUser("+91"+phNum);
-            }
+            else
+                findUser("+91"+phNum);
         });
         return v;
     }
@@ -75,8 +79,7 @@ public class AddChatFragment extends DialogFragment {
 
                     ShowAddedUserFragment fragment = new ShowAddedUserFragment(addUserData);
                     fragment.show(requireActivity().getSupportFragmentManager(),"ShowAddedUserFragment");
-                    dismiss();
-
+                    phNo.setText("");
                 }
                 else {
                     Log.i("ashis","account not found");

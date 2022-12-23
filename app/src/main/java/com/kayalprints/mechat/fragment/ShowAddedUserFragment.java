@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.kayalprints.mechat.R;
+import com.kayalprints.mechat.classes.ChatDataHolder;
 import com.kayalprints.mechat.classes.User;
 import com.kayalprints.mechat.activity.MainActivity;
 import com.squareup.picasso.Picasso;
@@ -49,7 +50,7 @@ public class ShowAddedUserFragment extends DialogFragment {
 
         chat.setOnClickListener(onClick -> {
             User newChat = new User(userName,dpLink,phNo);
-            MainActivity.updateChatList(newChat);
+            ChatDataHolder.addChat(newChat);
             dismiss();
         });
 

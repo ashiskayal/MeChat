@@ -27,7 +27,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.kayalprints.mechat.R;
-import com.kayalprints.mechat.classes.StaticOperations;
+import com.kayalprints.mechat.classes.Operations;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -82,7 +82,7 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
         nameEditIcon.setOnClickListener(v -> {
             editOn = !editOn;
             userName = name.getText().toString().trim();
-            StaticOperations.nameEdition(userName, name, nameEditIcon, editOn, ProfileDataSetOnceActivity.this);
+            Operations.nameEdition(userName, name, nameEditIcon, editOn, ProfileDataSetOnceActivity.this);
         });
 
         profileImage.setOnClickListener(v -> profileImageClicked());
@@ -111,9 +111,9 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
 
                                 String storedName = Objects.requireNonNull(snapshot.child("name").getValue()).toString();
                                 if(storedName.equals("null"))
-                                    editOn = StaticOperations.nameEdition("", name, nameEditIcon, true, ProfileDataSetOnceActivity.this);
+                                    editOn = Operations.nameEdition("", name, nameEditIcon, true, ProfileDataSetOnceActivity.this);
                                 else
-                                    editOn = StaticOperations.nameEdition(storedName, name, nameEditIcon, false, ProfileDataSetOnceActivity.this);
+                                    editOn = Operations.nameEdition(storedName, name, nameEditIcon, false, ProfileDataSetOnceActivity.this);
 
 
                                 String dpLink = (Objects.requireNonNull(snapshot.child("dp").getValue()).toString());
@@ -139,7 +139,7 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
             Log.i("ashis", "in getData-onFail have data =  "+false);
 
 
-            editOn = StaticOperations.nameEdition("",name,nameEditIcon,true,ProfileDataSetOnceActivity.this);
+            editOn = Operations.nameEdition("",name,nameEditIcon,true,ProfileDataSetOnceActivity.this);
 
             profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
 
@@ -192,12 +192,12 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
     protected void onDestroy() {
         Bundle b = new Bundle();
         if (dp != null) {
-            b.putByteArray("dp", StaticOperations.getByteArrayImage(dp));
+            b.putByteArray("dp", Operations.getByteArrayImage(dp));
             userName = name.getText().toString().trim();
             b.putString("username", userName);
 
             Log.i("ashis","in destroy : "+b.getString("username"));
-            StaticOperations.updateDBData(user, databaseReference, storageReference, b);
+            Operations.updateDBData(user, databaseReference, storageReference, b);
         }
         super.onDestroy();
     }
