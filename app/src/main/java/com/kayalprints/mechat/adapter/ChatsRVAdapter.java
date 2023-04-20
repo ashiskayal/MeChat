@@ -10,9 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.kayalprints.mechat.R;
 import com.kayalprints.mechat.classes.User;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -44,7 +44,7 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
         String phNo = chats.get(position).getPhNumber();
 
         if(!dpLink.equals("null"))
-            Picasso.get().load(dpLink).into(holder.image);
+            Glide.with(this.c).load(dpLink).into(holder.image);
 //        else holder.image.setImageResource(R.drawable.ic_baseline_profile_white); // This line is not needed because this
                                                                                         // default image resource is already set in design.
 
@@ -81,25 +81,19 @@ public class ChatsRVAdapter extends RecyclerView.Adapter<ChatsRVAdapter.ChatsVie
             name = itemView.findViewById(R.id.textViewNameCard);
             card = itemView.findViewById(R.id.card);
 
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int position = getAdapterPosition();
-                    if(listener != null && position != RecyclerView.NO_POSITION)
-                        listener.onItemClick(chats.get(position));
-                }
+            itemView.setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if(listener != null && position != RecyclerView.NO_POSITION)
+                    listener.onItemClick(chats.get(position));
             });
 
-            itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
+            itemView.setOnLongClickListener(v -> {
 
-                    int position = getAdapterPosition();
-                    if(longListener != null && position != RecyclerView.NO_POSITION)
-                        longListener.onItemLongClick(position, v);
+                int position = getAdapterPosition();
+                if(longListener != null && position != RecyclerView.NO_POSITION)
+                    longListener.onItemLongClick(position, v);
 
-                    return false;
-                }
+                return false;
             });
 
         }

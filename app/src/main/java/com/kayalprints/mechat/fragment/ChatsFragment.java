@@ -4,6 +4,10 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -11,16 +15,11 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.kayalprints.mechat.R;
 import com.kayalprints.mechat.activity.MassagingActivity;
 import com.kayalprints.mechat.adapter.ChatsRVAdapter;
 import com.kayalprints.mechat.classes.ChatDataHolder;
 import com.kayalprints.mechat.classes.User;
+import com.kayalprints.mechat.databinding.FragmentChatsBinding;
 
 import java.util.Collections;
 
@@ -37,27 +36,22 @@ public class ChatsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View v = inflater.inflate(R.layout.fragment_chats, container, false);
+        com.kayalprints.mechat.databinding.FragmentChatsBinding binding = FragmentChatsBinding.inflate(inflater);
 
         this.context = getContext();
 
-        RecyclerView chatsRv = v.findViewById(R.id.recyclerViewChats);
-
-        chatsRv.setLayoutManager(new LinearLayoutManager(this.context));
+        binding.recyclerViewChats.setLayoutManager(new LinearLayoutManager(this.context));
         adapter = new ChatsRVAdapter(ChatDataHolder.getChats(),this.context);
 
-        initiateItemTouchHelper(chatsRv);
+        initiateItemTouchHelper(binding.recyclerViewChats);
 
-        adapter.setOnItemClickListener(new ChatsRVAdapter.onItemClickListener() {
-            @Override
-            public void onItemClick(User user) {
-                Intent i = new Intent(context, MassagingActivity.class);
-                i.putExtra("chatWithPh",user.getPhNumber());
-                i.putExtra("chatWithName",user.getUserName());
-                startActivity(i);
-            }
+        adapter.setOnItemClickListener(user -> {
+            Intent i = new Intent(context, MassagingActivity.class);
+            i.putExtra("chatWithPh",user.getPhNumber());
+            i.putExtra("chatWithName",user.getUserName());
+            startActivity(i);
         });
-/**
+/*
         adapter.setOnItemLongClickListener(new ChatsRVAdapter.onItemLongClickListener() {
             @Override
             public void onItemLongClick(int pos, View v) {
@@ -80,11 +74,11 @@ public class ChatsFragment extends Fragment {
             }
         });
 **/
-        chatsRv.setAdapter(adapter);
-        return v;
+        binding.recyclerViewChats.setAdapter(adapter);
+        return binding.getRoot();
     }
 
-/**
+/*
     @SuppressLint("NotifyDataSetChanged")
     private boolean changeChatPositionTo(int initial, int finalPos, @NonNull ChatsRVAdapter rvAdapter) {
         User user = ChatDataHolder.removeChat(initial);

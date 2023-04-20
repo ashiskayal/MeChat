@@ -6,27 +6,21 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
-import com.kayalprints.mechat.R;
-import com.kayalprints.mechat.classes.MeChatDatabase;
 import com.kayalprints.mechat.classes.Operations;
+import com.kayalprints.mechat.databinding.FragmentAddChatBinding;
 
 import java.util.Objects;
 
 public class AddChatFragment extends Fragment {
 
-    private EditText phNo;
-    private Button find;
+    private FragmentAddChatBinding binding;
+
     private final DatabaseReference databaseReference;
 
     private Boolean haveData;
@@ -41,15 +35,12 @@ public class AddChatFragment extends Fragment {
 
     @SuppressLint("MissingInflatedId")
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_add_chat, container, false);
+        binding = FragmentAddChatBinding.inflate(inflater);
 
-        phNo = v.findViewById(R.id.editTextAddChatFragPhone);
-        find = v.findViewById(R.id.buttonAddChatFrag);
-
-        find.setOnClickListener(a -> {
-            String phNum = Operations.extractPhoneNumber(phNo.getText().toString().trim());
+        binding.buttonAddChatFrag.setOnClickListener(a -> {
+            String phNum = Operations.extractPhoneNumber(binding.editTextAddChatFragPhone.getText().toString().trim());
             Toast.makeText(getContext(), "Entered ph number is : "+phNum, Toast.LENGTH_LONG).show();
 
             if(phNum.isEmpty())
@@ -57,44 +48,36 @@ public class AddChatFragment extends Fragment {
             else
                 findUser("+91"+phNum);
         });
-        return v;
+        return binding.getRoot();
     }
 
     private void findUser(String phNumber) {
 
-        databaseReference.child(phNumber).get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
-            @Override
-            public void onSuccess(DataSnapshot dataSnapshot) {
-                haveData = (Boolean) dataSnapshot.child("haveData").getValue();
+        databaseReference.child(phNumber).get().addOnSuccessListener(dataSnapshot -> {
+            haveData = (Boolean) dataSnapshot.child("haveData").getValue();
 
-                if(haveData != null) {
-                    Log.i("ashis","account found");
-                    Bundle addUserData = new Bundle();
-                    addUserData.putBoolean("haveData",true);
-                    addUserData.putString("username",
-                            Objects.requireNonNull(dataSnapshot.child("name").getValue()).toString());
-                    addUserData.putString("dpLink",
-                            Objects.requireNonNull(dataSnapshot.child("dp").getValue()).toString());
-                    addUserData.putString("phNo",phNumber);
+            if(haveData != null) {
+                Log.i("ashis","account found");
+                Bundle addUserData = new Bundle();
+                addUserData.putBoolean("haveData",true);
+                addUserData.putString("username",
+                        Objects.requireNonNull(dataSnapshot.child("name").getValue()).toString());
+                addUserData.putString("dpLink",
+                        Objects.requireNonNull(dataSnapshot.child("dp").getValue()).toString());
+                addUserData.putString("phNo",phNumber);
 
-                    ShowAddedUserFragment fragment = new ShowAddedUserFragment(addUserData);
-                    fragment.show(requireActivity().getSupportFragmentManager(),"ShowAddedUserFragment");
-                    phNo.setText("");
-                }
-                else {
-                    Log.i("ashis","account not found");
-                    phNo.setText("");
-                    phNo.setHint("Account no found.");
-                    haveData = false;
-                }
-
+                ShowAddedUserFragment fragment = new ShowAddedUserFragment(addUserData);
+                fragment.show(requireActivity().getSupportFragmentManager(),"ShowAddedUserFragment");
+                binding.editTextAddChatFragPhone.setText("");
             }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.i("ashis","addChat on fail");
+            else {
+                Log.i("ashis","account not found");
+                binding.editTextAddChatFragPhone.setText("");
+                binding.editTextAddChatFragPhone.setHint("Account no found.");
+                haveData = false;
             }
-        });
+
+        }).addOnFailureListener(e -> Log.i("ashis","addChat on fail"));
     }
 
 }

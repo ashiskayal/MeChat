@@ -7,36 +7,27 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
-import com.google.firebase.auth.FirebaseAuth;
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.kayalprints.mechat.R;
 import com.kayalprints.mechat.classes.MeChatDatabase;
 import com.kayalprints.mechat.classes.Operations;
-import com.squareup.picasso.Picasso;
+import com.kayalprints.mechat.databinding.ActivityProfileBinding;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
-
-import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -44,12 +35,7 @@ public class ProfileActivity extends AppCompatActivity {
     private StorageReference storageReference;
     private FirebaseUser user;
 
-    private CircleImageView profileImage;
-    private EditText name;
-    private TextView createdDateText, phoneNoText;
-    private ImageView nameEditIcon;
-    private ConstraintLayout signOut, userNameLay;
-    private ProgressBar progressbarDp;
+    private ActivityProfileBinding binding;
 
     private ArrayList<String> userData;
     private Bitmap dp;
@@ -61,17 +47,9 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        binding = ActivityProfileBinding.inflate(getLayoutInflater());
         Objects.requireNonNull(getSupportActionBar()).setTitle("Profile");
-        setContentView(R.layout.activity_profile);
-
-        profileImage = findViewById(R.id.profileCircleImageNewChat);
-        name = findViewById(R.id.editTextProfileName);
-        createdDateText = findViewById(R.id.textViewCreatedDate);
-        nameEditIcon = findViewById(R.id.imageViewEditname);
-        signOut = findViewById(R.id.signoutlay);
-        userNameLay = findViewById(R.id.userNameLay);
-        progressbarDp = findViewById(R.id.progressbarDpNewChat);
-        phoneNoText = findViewById(R.id.textViewPhNo);
+        setContentView(binding.getRoot());
 
         DatabaseReference df = MeChatDatabase.getDatabaseReference();
         if(df != null) databaseReference = df.child("UsersData");
@@ -82,15 +60,15 @@ public class ProfileActivity extends AppCompatActivity {
 
         getData();
 
-        profileImage.setOnClickListener(v -> profileImageClicked());
+        binding.profileCircleImageNewChat.setOnClickListener(v -> profileImageClicked());
 
-        nameEditIcon.setOnClickListener(v -> {
+        binding.imageViewEditname.setOnClickListener(v -> {
             editOn = !editOn;
-            String userName = name.getText().toString().trim();
-            Operations.nameEdition(userName, name, nameEditIcon, editOn, ProfileActivity.this);
+            String userName = binding.editTextProfileName.getText().toString().trim();
+            Operations.nameEdition(userName, binding.editTextProfileName, binding.imageViewEditname, editOn, ProfileActivity.this);
         });
 
-        signOut.setOnClickListener(v -> {
+        binding.signoutlay.setOnClickListener(v -> {
             MeChatDatabase.getAuth().signOut(); // Null check
             setResult(RESULT_OK, new Intent());
             finish();
@@ -119,24 +97,25 @@ public class ProfileActivity extends AppCompatActivity {
 
                             String storedName = Objects.requireNonNull(snapshot.child("name").getValue()).toString();
                             if (storedName.equals("null"))
-                                editOn = Operations.nameEdition("", name, nameEditIcon, true, ProfileActivity.this);
+                                editOn = Operations.nameEdition("", binding.editTextProfileName, binding.imageViewEditname, true, ProfileActivity.this);
                             else
-                                editOn = Operations.nameEdition(storedName, name, nameEditIcon, false, ProfileActivity.this);
+                                editOn = Operations.nameEdition(storedName, binding.editTextProfileName, binding.imageViewEditname, false, ProfileActivity.this);
 
                             userData.add(storedName);
 
                             String dpLink = (Objects.requireNonNull(snapshot.child("dp").getValue()).toString());
                             if (!dpLink.equals("null"))
-                                Picasso.get().load(dpLink).into(profileImage);
+
+                                Glide.with(ProfileActivity.this).load(dpLink).into(binding.profileCircleImageNewChat);
                             else
-                                profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
+                                binding.profileCircleImageNewChat.setImageResource(R.drawable.ic_baseline_profile_black);
                             userData.add(dpLink);
 
                             String date = (Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
-                            createdDateText.setText(date);
+                            binding.textViewCreatedDate.setText(date);
                             userData.add(date);
 
-                            phoneNoText.setText(Objects.requireNonNull(user.getPhoneNumber()).substring(3));
+                            binding.textViewPhNo.setText(Objects.requireNonNull(user.getPhoneNumber()).substring(3));
 
                         }
 
@@ -154,14 +133,14 @@ public class ProfileActivity extends AppCompatActivity {
                 haveData = false;
                 Log.i("ashis", "in getData-onFail have data =  " + false);
 
-                editOn = Operations.nameEdition("", name, nameEditIcon, true, ProfileActivity.this);
+                editOn = Operations.nameEdition("", binding.editTextProfileName, binding.imageViewEditname, true, ProfileActivity.this);
 
-                profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
+                Glide.with(this).load(R.drawable.ic_baseline_profile_black).into(binding.profileCircleImageNewChat);
 
                 reference.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        createdDateText.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
+                        binding.textViewCreatedDate.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
                     }
 
                     @Override
@@ -195,7 +174,7 @@ public class ProfileActivity extends AppCompatActivity {
             Uri imageUri = data.getData();
             try {
                 dp = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                Picasso.get().load(imageUri).into(profileImage);
+                Glide.with(this).load(imageUri).into(binding.profileCircleImageNewChat);
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Selected image getting error", Toast.LENGTH_SHORT).show();
@@ -211,7 +190,7 @@ public class ProfileActivity extends AppCompatActivity {
         if(dp != null)
             b.putByteArray("dp", Operations.getByteArrayImage(dp));
         userData.remove(0);
-        userData.add(0,name.getText().toString().trim());
+        userData.add(0,binding.editTextProfileName.getText().toString().trim());
         b.putString("username",userData.get(0));
         try {
             Operations.updateDBData(user, databaseReference, storageReference, b);

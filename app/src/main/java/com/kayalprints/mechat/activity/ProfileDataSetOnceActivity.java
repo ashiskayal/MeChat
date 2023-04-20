@@ -7,16 +7,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -28,21 +25,14 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.kayalprints.mechat.R;
 import com.kayalprints.mechat.classes.Operations;
-import com.squareup.picasso.Picasso;
+import com.kayalprints.mechat.databinding.ActivityProfileDataSetOnceBinding;
 
 import java.io.IOException;
 import java.util.Objects;
 
-import de.hdodenhof.circleimageview.CircleImageView;
-
 public class ProfileDataSetOnceActivity extends AppCompatActivity {
 
-    private CircleImageView profileImage;
-    private EditText name;
-    private TextView createdDateText;
-    private ImageView nameEditIcon;
-    private ConstraintLayout userNameLay;
-    private ImageView imgContinue;
+    ActivityProfileDataSetOnceBinding binding;
 
     private FirebaseAuth auth;
     private FirebaseDatabase database;
@@ -60,15 +50,10 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_profile_data_set_once);
+        binding = ActivityProfileDataSetOnceBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        profileImage = findViewById(R.id.profileCircleImageOnce);
-        name = findViewById(R.id.editTextProfileNameOnce);
-        createdDateText = findViewById(R.id.textViewCreatedDateOnce);
-        nameEditIcon = findViewById(R.id.imageViewEditnameOnce);
-        userNameLay = findViewById(R.id.userNameLayOnce);
-        imgContinue = findViewById(R.id.imageContinue);
-        imgContinue.setBackgroundResource(R.drawable.ic_baseline_right);
+        Glide.with(this).load(R.drawable.ic_baseline_right).into(binding.imageContinue);
 
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
@@ -79,16 +64,16 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
 
         getData();
 
-        nameEditIcon.setOnClickListener(v -> {
+        binding.imageViewEditnameOnce.setOnClickListener(v -> {
             editOn = !editOn;
-            userName = name.getText().toString().trim();
-            Operations.nameEdition(userName, name, nameEditIcon, editOn, ProfileDataSetOnceActivity.this);
+            userName = binding.editTextProfileNameOnce.getText().toString().trim();
+            Operations.nameEdition(userName, binding.editTextProfileNameOnce, binding.imageViewEditnameOnce, editOn, ProfileDataSetOnceActivity.this);
         });
 
-        profileImage.setOnClickListener(v -> profileImageClicked());
+        binding.profileCircleImageOnce.setOnClickListener(v -> profileImageClicked());
 
-        imgContinue.setOnClickListener(v -> {
-            if(editOn || userName == null || userName.isEmpty()) userName = name.getText().toString().trim();
+        binding.imageContinue.setOnClickListener(v -> {
+            if(editOn || userName == null || userName.isEmpty()) userName = binding.editTextProfileNameOnce.getText().toString().trim();
             startActivity(new Intent(ProfileDataSetOnceActivity.this, MainActivity.class));
             finish();
         });
@@ -111,17 +96,17 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
 
                                 String storedName = Objects.requireNonNull(snapshot.child("name").getValue()).toString();
                                 if(storedName.equals("null"))
-                                    editOn = Operations.nameEdition("", name, nameEditIcon, true, ProfileDataSetOnceActivity.this);
+                                    editOn = Operations.nameEdition("", binding.editTextProfileNameOnce, binding.imageViewEditnameOnce, true, ProfileDataSetOnceActivity.this);
                                 else
-                                    editOn = Operations.nameEdition(storedName, name, nameEditIcon, false, ProfileDataSetOnceActivity.this);
+                                    editOn = Operations.nameEdition(storedName, binding.editTextProfileNameOnce, binding.imageViewEditnameOnce, false, ProfileDataSetOnceActivity.this);
 
 
                                 String dpLink = (Objects.requireNonNull(snapshot.child("dp").getValue()).toString());
                                 if(!dpLink.equals("null"))
-                                    Picasso.get().load(dpLink).into(profileImage);
-                                else profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
+                                    Glide.with(ProfileDataSetOnceActivity.this).load(dpLink).into(binding.profileCircleImageOnce);
+                                else Glide.with(ProfileDataSetOnceActivity.this).load(R.drawable.ic_baseline_profile_black).into(binding.profileCircleImageOnce);
 
-                                createdDateText.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
+                                binding.textViewCreatedDateOnce.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
 
                             }
 
@@ -139,14 +124,14 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
             Log.i("ashis", "in getData-onFail have data =  "+false);
 
 
-            editOn = Operations.nameEdition("",name,nameEditIcon,true,ProfileDataSetOnceActivity.this);
+            editOn = Operations.nameEdition("",binding.editTextProfileNameOnce,binding.imageViewEditnameOnce,true,ProfileDataSetOnceActivity.this);
 
-            profileImage.setImageResource(R.drawable.ic_baseline_profile_black);
+            Glide.with(this).load(R.drawable.ic_baseline_profile_black).into(binding.profileCircleImageOnce);
 
             reference.addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            createdDateText.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
+                            binding.textViewCreatedDateOnce.setText(Objects.requireNonNull(snapshot.child("DOJoining").getValue()).toString());
                         }
 
                         @Override
@@ -178,7 +163,7 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
             Uri imageUri = data.getData();
             try {
                 dp = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                Picasso.get().load(imageUri).into(profileImage);
+                Glide.with(ProfileDataSetOnceActivity.this).load(imageUri).into(binding.profileCircleImageOnce);
                 haveData = true;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -193,7 +178,7 @@ public class ProfileDataSetOnceActivity extends AppCompatActivity {
         Bundle b = new Bundle();
         if (dp != null) {
             b.putByteArray("dp", Operations.getByteArrayImage(dp));
-            userName = name.getText().toString().trim();
+            userName = binding.editTextProfileNameOnce.getText().toString().trim();
             b.putString("username", userName);
 
             Log.i("ashis","in destroy : "+b.getString("username"));

@@ -11,8 +11,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.IdRes;
@@ -21,16 +19,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentContainerView;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.kayalprints.mechat.R;
 import com.kayalprints.mechat.classes.MeChatDatabase;
+import com.kayalprints.mechat.databinding.ActivityMainBinding;
 import com.kayalprints.mechat.fragment.AddChatFragment;
 import com.kayalprints.mechat.fragment.ChatsFragment;
 import com.kayalprints.mechat.fragment.MyAccountFragment;
@@ -42,94 +39,104 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int ALLCHATS = 35, ADDUSER = 36, MYACCOUNT = 37;
+    private static final int ALL_CHATS = 35, ADDUSER = 36, MY_ACCOUNT = 37;
+    private static final String ALL_CHATS_TAG = "chats", ADD_USER_TAG = "adduser", MY_ACCOUNT_TAG = "myaccount";
     private static int currentFrag;
 
-    private FloatingActionButton addChat;
-
-    private ImageView allChats, addUser, myAccount;
-    private FragmentContainerView containerView;
+    private ActivityMainBinding binding;
 
     private ActivityResultLauncher<Intent> activityResultLauncherForProfile;
-
 
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        Log.i("mainActivityCheck","OnCreate");
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         MeChatDatabase.setMeChatDatabase(FirebaseDatabase.getInstance(), FirebaseStorage.getInstance(), FirebaseAuth.getInstance());
 
         if(checkPermission()) requestPermission();
 
-//        ChatDataHolder.addChat(new User("Default User2", "null", "8888888888"));
-
         registerActivityLauncher();
 
+        FragmentManager manager = getSupportFragmentManager();
+        FragmentTransaction ft = manager.beginTransaction();
 
-        addChat = findViewById(R.id.floatingActionAddChat);
-        allChats = findViewById(R.id.imageViewOptionsChats);
-        addUser = findViewById(R.id.imageViewOptionsAddChat);
-        myAccount = findViewById(R.id.imageViewOptionsAccount);
-        containerView = findViewById(R.id.mainFragmentContainerView);
-
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ChatsFragment chatsFragment = new ChatsFragment();
+        AddChatFragment addChatFragment = AddChatFragment.getInstance(FirebaseDatabase.getInstance().getReference());
+        MyAccountFragment myAccountFragment = MyAccountFragment.getInstance(
+                FirebaseDatabase.getInstance(), FirebaseStorage.getInstance(), FirebaseAuth.getInstance()
+        );
 
-        ft.add(R.id.mainFragmentContainerView,chatsFragment);
+
+        ft.add(R.id.mainFragmentContainerView,chatsFragment,ALL_CHATS_TAG);
+        ft.add(R.id.mainFragmentContainerView,addChatFragment, ADD_USER_TAG);
+        ft.add(R.id.mainFragmentContainerView,myAccountFragment, MY_ACCOUNT_TAG);
         ft.commit();
 
-        MainActivity.currentFrag = MainActivity.ALLCHATS;
+        FragmentTransaction fragmentTransaction = manager.beginTransaction();
+        fragmentTransaction.hide(Objects.requireNonNull(manager.findFragmentByTag(MY_ACCOUNT_TAG)));
+        fragmentTransaction.hide(Objects.requireNonNull(manager.findFragmentByTag(ADD_USER_TAG)));
+        fragmentTransaction.show(Objects.requireNonNull(manager.findFragmentByTag(ALL_CHATS_TAG)));
+        fragmentTransaction.commit();
+//        MainActivity.currentFrag = MainActivity.ALL_CHATS;
 
-        allChats.setOnClickListener(v -> {
-            if(MainActivity.currentFrag != MainActivity.ALLCHATS) {
-                changeImageOpacity(allChats, addUser, myAccount);
+        binding.imageViewOptionsChats.setOnClickListener(v -> {
+//            if(MainActivity.currentFrag != MainActivity.ALL_CHATS) {
+                changeImageOpacity(binding.imageViewOptionsChats, binding.imageViewOptionsAddChat, binding.imageViewOptionsAccount);
 
-                ChatsFragment fragment = new ChatsFragment();
+                FragmentTransaction transaction = manager.beginTransaction();
+                transaction.hide(Objects.requireNonNull(manager.findFragmentByTag(MY_ACCOUNT_TAG)));
+                transaction.hide(Objects.requireNonNull(manager.findFragmentByTag(ADD_USER_TAG)));
+                transaction.show(Objects.requireNonNull(manager.findFragmentByTag(ALL_CHATS_TAG)));
+                transaction.commit();
+//                showFragment(manager, chatsFragment, R.id.mainFragmentContainerView);
+//                hideFragments(manager, "myaccount", "adduser");
 
-                FragmentManager manager = getSupportFragmentManager();
-                showFragment(manager, "chats", fragment, R.id.mainFragmentContainerView);
-                hideFragments(manager, "myaccount", "adduser");
-
-                MainActivity.currentFrag = MainActivity.ALLCHATS;
-            }
+//                MainActivity.currentFrag = MainActivity.ALL_CHATS;
+//            }
         });
 
-        addUser.setOnClickListener(v -> {
-            if(MainActivity.currentFrag != MainActivity.ADDUSER) {
-                changeImageOpacity(addUser, allChats, myAccount);
+        binding.imageViewOptionsAddChat.setOnClickListener(v -> {
+//            if(MainActivity.currentFrag != MainActivity.ADDUSER) {
+                changeImageOpacity(binding.imageViewOptionsAddChat, binding.imageViewOptionsChats, binding.imageViewOptionsAccount);
 
-                AddChatFragment fragment = AddChatFragment.getInstance(FirebaseDatabase.getInstance().getReference());
+                FragmentTransaction transaction = manager.beginTransaction();
+                transaction.hide(Objects.requireNonNull(manager.findFragmentByTag(ALL_CHATS_TAG)));
+                transaction.hide(Objects.requireNonNull(manager.findFragmentByTag(MY_ACCOUNT_TAG)));
+                transaction.show(Objects.requireNonNull(manager.findFragmentByTag(ADD_USER_TAG)));
+                transaction.commit();
 
-                FragmentManager manager = getSupportFragmentManager();
-                showFragment(manager, "adduser", fragment, R.id.mainFragmentContainerView);
-                hideFragments(manager, "myaccount", "chats");
-
-                MainActivity.currentFrag = MainActivity.ADDUSER;
-            }
+//                FragmentManager manager = getSupportFragmentManager();
+//                showFragment(manager, "adduser", fragment, R.id.mainFragmentContainerView);
+//
+//                hideFragments(manager, "myaccount", "chats");
+//
+//                MainActivity.currentFrag = MainActivity.ADDUSER;
+//            }
         });
 
-        myAccount.setOnClickListener(v -> {
-            if(MainActivity.currentFrag != MainActivity.MYACCOUNT) {
-                changeImageOpacity(myAccount, allChats, addUser);
+        binding.imageViewOptionsAccount.setOnClickListener(v -> {
+//            if(MainActivity.currentFrag != MainActivity.MY_ACCOUNT) {
+                changeImageOpacity(binding.imageViewOptionsAccount, binding.imageViewOptionsChats, binding.imageViewOptionsAddChat);
 
-                MyAccountFragment fragment = MyAccountFragment.getInstance(
-                        FirebaseDatabase.getInstance(), FirebaseStorage.getInstance(), FirebaseAuth.getInstance()
-                );
+                FragmentTransaction transaction = manager.beginTransaction();
+                transaction.hide(Objects.requireNonNull(manager.findFragmentByTag(ALL_CHATS_TAG)));
+                transaction.show(Objects.requireNonNull(manager.findFragmentByTag(MY_ACCOUNT_TAG)));
+                transaction.hide(Objects.requireNonNull(manager.findFragmentByTag(ADD_USER_TAG)));
+                transaction.commit();
 
-                FragmentManager manager = getSupportFragmentManager();
-                showFragment(manager, "myaccount", fragment, R.id.mainFragmentContainerView);
-                hideFragments(manager, "adduser", "chats");
-
-                MainActivity.currentFrag = MainActivity.MYACCOUNT;
-            }
+//                FragmentManager manager = getSupportFragmentManager();
+//                showFragment(manager, "myaccount", fragment, R.id.mainFragmentContainerView);
+//                hideFragments(manager, "adduser", "chats");
+//
+//                MainActivity.currentFrag = MainActivity.MY_ACCOUNT;
+//            }
         });
 
 /**
-        addChat.setOnClickListener(v -> {
+        binding.floatingActionAddChat.setOnClickListener(v -> {
             // Code to change the constraint values
             ConstraintLayout constraintLayout = findViewById(R.id.mainLayout);
             ConstraintSet constraintSet = new ConstraintSet();
@@ -176,14 +183,11 @@ public class MainActivity extends AppCompatActivity {
     /** This is used to finish this activity when log out from other activities */
     private void registerActivityLauncher() {
         activityResultLauncherForProfile = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
+                result -> {
 
-                        if (result.getData() != null && result.getResultCode() == RESULT_OK) {
-                            startActivity(new Intent(MainActivity.this, AuthenticationActivity.class));
-                            finish();
-                        }
+                    if (result.getData() != null && result.getResultCode() == RESULT_OK) {
+                        startActivity(new Intent(MainActivity.this, AuthenticationActivity.class));
+                        finish();
                     }
                 });
     }
@@ -220,21 +224,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void showFragment(FragmentManager manager, String fragmentTag, Fragment fragment, @IdRes int containerViewId) {
-        if(manager.findFragmentByTag(fragmentTag) != null) {
-            manager.beginTransaction()
-                    .show(Objects.requireNonNull(manager.findFragmentByTag(fragmentTag))).commit();
-        } else manager.beginTransaction().add(containerViewId,fragment, fragmentTag).commit();
-    }
+//    private void showFragment(FragmentManager manager, String fragmentTag, Fragment fragment, @IdRes int containerViewId) {
+//        if(manager.findFragmentByTag(fragmentTag) != null) {
+//            manager.beginTransaction()
+//                    .show(Objects.requireNonNull(manager.findFragmentByTag(fragmentTag))).commit();
+//        } else manager.beginTransaction().add(containerViewId,fragment, fragmentTag).commit();
+//    }
 
-    private void hideFragments(FragmentManager manager, String tag1, String tag2) {
-        if(manager.findFragmentByTag(tag1) != null)
-            manager.beginTransaction()
-                    .hide(Objects.requireNonNull(manager.findFragmentByTag(tag1))).commit();
-
-        if(manager.findFragmentByTag(tag2) != null)
-            manager.beginTransaction()
-                    .hide(Objects.requireNonNull(manager.findFragmentByTag(tag2))).commit();
-    }
+//    private void hideFragments(FragmentManager manager, String tag1, String tag2) {
+//        if(manager.findFragmentByTag(tag1) != null)
+//            manager.beginTransaction()
+//                    .hide(Objects.requireNonNull(manager.findFragmentByTag(tag1))).commit();
+//
+//        if(manager.findFragmentByTag(tag2) != null)
+//            manager.beginTransaction()
+//                    .hide(Objects.requireNonNull(manager.findFragmentByTag(tag2))).commit();
+//    }
 
 }

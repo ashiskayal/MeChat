@@ -5,10 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,6 +23,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.kayalprints.mechat.R;
 import com.kayalprints.mechat.classes.Operations;
+import com.kayalprints.mechat.databinding.ActivityAuthenticationBinding;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,14 +32,11 @@ import java.util.concurrent.TimeUnit;
 
 public class AuthenticationActivity extends AppCompatActivity {
 
-    private EditText phoneNumber, otp;
-    private Button getCode, verify;
-    private ProgressBar progressBar;
-    private ImageView logo;
+    ActivityAuthenticationBinding binding;
 
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private final FirebaseDatabase database = FirebaseDatabase.getInstance();
-    private DatabaseReference databaseReference = database.getReference().child("UsersData");
+    private final DatabaseReference databaseReference = database.getReference().child("UsersData");
 
     private String codeSent, createdTime;
 
@@ -64,34 +58,27 @@ public class AuthenticationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_authentication);
+        binding = ActivityAuthenticationBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        phoneNumber = findViewById(R.id.editTextPhoneSignIn);
-        otp = findViewById(R.id.editTextPhCode);
-        getCode = findViewById(R.id.buttonGetCode);
-        verify = findViewById(R.id.buttonVerifyCode);
-        progressBar = findViewById(R.id.progressbarAuth);
-        logo = findViewById(R.id.imageViewLogo);
-        progressBar.setVisibility(View.INVISIBLE);
-
-
-        getCode.setBackgroundResource(R.drawable.inputbutton);
+        binding.progressbarAuth.setVisibility(View.INVISIBLE);
+        binding.buttonGetCode.setBackgroundResource(R.drawable.inputbutton);
 
         setAnimations();
 
-        getCode.setOnClickListener(view -> {
-            getCode.setClickable(false);
-            progressBar.setVisibility(View.VISIBLE);
-            String phNo = Operations.extractPhoneNumber(phoneNumber.getText().toString().trim());
+        binding.buttonGetCode.setOnClickListener(view -> {
+            binding.buttonGetCode.setClickable(false);
+            binding.progressbarAuth.setVisibility(View.VISIBLE);
+            String phNo = Operations.extractPhoneNumber(binding.editTextPhoneSignIn.getText().toString().trim());
             if(!phNo.isEmpty())
                 sendCode("+91"+phNo);
             else Toast.makeText(AuthenticationActivity.this, "Please enter your phone number", Toast.LENGTH_SHORT).show();
         });
 
-        verify.setOnClickListener(view -> {
-            progressBar.setVisibility(View.VISIBLE);
+        binding.buttonVerifyCode.setOnClickListener(view -> {
+            binding.progressbarAuth.setVisibility(View.VISIBLE);
             signWithPhoneCode();
-            getCode.setClickable(true);
+            binding.buttonGetCode.setClickable(true);
         });
 
 
@@ -117,7 +104,7 @@ public class AuthenticationActivity extends AppCompatActivity {
         @Override
         public void onVerificationFailed(@NonNull FirebaseException e) {
             Toast.makeText(AuthenticationActivity.this, "Code can't sent", Toast.LENGTH_SHORT).show();
-            getCode.setClickable(true);
+            binding.buttonGetCode.setClickable(true);
         }
 
         @Override
@@ -129,7 +116,7 @@ public class AuthenticationActivity extends AppCompatActivity {
     };
 
     private void signWithPhoneCode() {
-        String otpEntered = otp.getText().toString().trim();
+        String otpEntered = binding.editTextPhCode.getText().toString().trim();
         if(!otpEntered.isEmpty()) {
             PhoneAuthCredential credential = PhoneAuthProvider.getCredential(codeSent, otpEntered);
 
@@ -163,7 +150,7 @@ public class AuthenticationActivity extends AppCompatActivity {
                     haveData = (Boolean) snapshot.getValue();
                     Log.i("ashis", "in createDB-onSuccess have data =  "+haveData);
 
-                    if(haveData == null || !haveData) setDefaultValue(reference); // If there is no haveData object in DB then haveData is not created tp its a null object
+                    if(haveData == null || !haveData) setDefaultValue(reference); // If there is no haveData object in DB then haveData is not created
                 }
 
                 @Override
@@ -194,22 +181,22 @@ public class AuthenticationActivity extends AppCompatActivity {
     }
 
     private void setAnimations() {
-        phoneNumber.setTranslationX(-300);
-        getCode.setTranslationX(300);
-        otp.setTranslationX(-300);
-        verify.setTranslationX(300);
+        binding.editTextPhoneSignIn.setTranslationX(-300);
+        binding.buttonGetCode.setTranslationX(300);
+        binding.editTextPhCode.setTranslationX(-300);
+        binding.buttonVerifyCode.setTranslationX(300);
 
-        getCode.setAlpha(0);
-        verify.setAlpha(0);
-        phoneNumber.setAlpha(0);
-        otp.setAlpha(0);
+        binding.buttonGetCode.setAlpha(0);
+        binding.buttonVerifyCode.setAlpha(0);
+        binding.editTextPhoneSignIn.setAlpha(0);
+        binding.editTextPhCode.setAlpha(0);
 
         long duration = 1000;
 
-        getCode.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
-        verify.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
-        phoneNumber.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
-        otp.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
+        binding.buttonGetCode.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
+        binding.buttonVerifyCode.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
+        binding.editTextPhoneSignIn.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
+        binding.editTextPhCode.animate().translationX(0).alpha(1f).setDuration(duration).setStartDelay(500).start();
     }
 
     @Override
@@ -224,24 +211,7 @@ public class AuthenticationActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         Log.i("ashis", "onRestart");
-        progressBar.setVisibility(View.INVISIBLE);
+        binding.progressbarAuth.setVisibility(View.INVISIBLE);
         super.onRestart();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

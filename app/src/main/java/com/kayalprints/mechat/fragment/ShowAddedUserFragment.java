@@ -2,26 +2,22 @@ package com.kayalprints.mechat.fragment;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-
-import androidx.fragment.app.DialogFragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
+
+import com.bumptech.glide.Glide;
 import com.kayalprints.mechat.R;
 import com.kayalprints.mechat.classes.ChatDataHolder;
 import com.kayalprints.mechat.classes.User;
-import com.kayalprints.mechat.activity.MainActivity;
-import com.squareup.picasso.Picasso;
-
-import de.hdodenhof.circleimageview.CircleImageView;
+import com.kayalprints.mechat.databinding.FragmentShowAddedUserBinding;
 
 public class ShowAddedUserFragment extends DialogFragment {
 
-    private Bundle usersData;
+    private final Bundle usersData;
 
     public ShowAddedUserFragment(Bundle data) {
         this.usersData = data;
@@ -29,31 +25,27 @@ public class ShowAddedUserFragment extends DialogFragment {
 
     @SuppressLint("MissingInflatedId")
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View v = inflater.inflate(R.layout.fragment_show_added_user, container, false);
-
-        CircleImageView dp = v.findViewById(R.id.profileCircleImageNewChat);
-        TextView name = v.findViewById(R.id.nameNewChat);
-        ImageView chat = v.findViewById(R.id.imageViewNewChat);
+        FragmentShowAddedUserBinding binding = FragmentShowAddedUserBinding.inflate(inflater);
 
         String userName = usersData.getString("username");
         String phNo = usersData.getString("phNo");
         String dpLink = usersData.getString("dpLink");
 
-        if(!userName.equals("null")) name.setText(phNo);
-        if (dpLink.equals("null")) {
-            dp.setImageResource(R.drawable.ic_baseline_profile_black);
-        } else
-            Picasso.get().load(dpLink).into(dp);
+        if(!userName.equals("null")) binding.nameNewChat.setText(phNo);
+        if (dpLink.equals("null"))
+            Glide.with(requireContext()).load(R.drawable.ic_baseline_profile_black).into(binding.profileCircleImageNewChat);
+        else
+            Glide.with(requireContext()).load(dpLink).into(binding.profileCircleImageNewChat);
 
-        chat.setOnClickListener(onClick -> {
+        binding.imageViewNewChat.setOnClickListener(onClick -> {
             User newChat = new User(userName,dpLink,phNo);
             ChatDataHolder.addChat(newChat);
             dismiss();
         });
 
-        return v;
+        return binding.getRoot();
     }
 }
