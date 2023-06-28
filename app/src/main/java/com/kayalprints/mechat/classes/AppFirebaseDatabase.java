@@ -9,15 +9,15 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-public class MeChatDatabase {
-    private static FirebaseDatabase database;
-    private static FirebaseStorage storage;
-    private static FirebaseAuth auth;
+public class AppFirebaseDatabase {
+    static FirebaseDatabase database;
+    static FirebaseStorage storage;
+    static FirebaseAuth auth;
 
     public static void setMeChatDatabase(FirebaseDatabase database, FirebaseStorage storage, FirebaseAuth auth) {
-        MeChatDatabase.database = database;
-        MeChatDatabase.storage = storage;
-        MeChatDatabase.auth = auth;
+        AppFirebaseDatabase.database = database;
+        AppFirebaseDatabase.storage = storage;
+        AppFirebaseDatabase.auth = auth;
     }
 
     public static FirebaseDatabase getDatabase() {

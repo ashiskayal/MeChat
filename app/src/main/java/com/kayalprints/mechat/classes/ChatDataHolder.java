@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ChatDataHolder {
+public final class ChatDataHolder {
 
     private static List<User> chats;
 

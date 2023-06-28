@@ -28,7 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.kayalprints.mechat.R;
-import com.kayalprints.mechat.classes.MeChatDatabase;
+import com.kayalprints.mechat.classes.AppFirebaseDatabase;
 import com.kayalprints.mechat.classes.Operations;
 import com.kayalprints.mechat.databinding.ActivityProfileBinding;
 
@@ -68,10 +68,10 @@ public class MyAccountFragment extends Fragment {
 
         binding.signoutlay.setVisibility(View.INVISIBLE);
 
-        DatabaseReference df = MeChatDatabase.getDatabaseReference();
+        DatabaseReference df = AppFirebaseDatabase.getDatabaseReference();
         if(df != null) databaseReference = df.child("UsersData");
-        storageReference = MeChatDatabase.getStorageReference(); // Can be null
-        user = MeChatDatabase.getCurrentUser(); // Can be null
+        storageReference = AppFirebaseDatabase.getStorageReference(); // Can be null
+        user = AppFirebaseDatabase.getCurrentUser(); // Can be null
 
         userData = new ArrayList<>(3);
 

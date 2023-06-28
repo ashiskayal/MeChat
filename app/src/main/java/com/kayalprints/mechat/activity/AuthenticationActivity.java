@@ -1,6 +1,7 @@
 package com.kayalprints.mechat.activity;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -45,8 +47,6 @@ public class AuthenticationActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        Log.i("ashis", "onStart");
-
         super.onStart();
         if (auth.getCurrentUser() != null) {
             startActivity(new Intent(AuthenticationActivity.this, MainActivity.class));
@@ -103,7 +103,8 @@ public class AuthenticationActivity extends AppCompatActivity {
 
         @Override
         public void onVerificationFailed(@NonNull FirebaseException e) {
-            Toast.makeText(AuthenticationActivity.this, "Code can't sent", Toast.LENGTH_SHORT).show();
+            Snackbar.make(AuthenticationActivity.this, binding.getRoot(), "Code can't sent", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Ok", v -> {}).show();
             binding.buttonGetCode.setClickable(true);
         }
 
@@ -111,7 +112,8 @@ public class AuthenticationActivity extends AppCompatActivity {
         public void onCodeSent(@NonNull String s, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
             super.onCodeSent(s, forceResendingToken);
             codeSent = s;
-            Toast.makeText(AuthenticationActivity.this, "Code is sent", Toast.LENGTH_SHORT).show();
+            Snackbar.make(AuthenticationActivity.this, binding.getRoot(), "Code sent", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("Ok", v -> {}).show();
         }
     };
 
@@ -135,7 +137,7 @@ public class AuthenticationActivity extends AppCompatActivity {
                     .addOnFailureListener(e -> Toast.makeText(AuthenticationActivity.this, "OTP verification is failed", Toast.LENGTH_SHORT).show())
                     .addOnCanceledListener(() -> Toast.makeText(AuthenticationActivity.this, "OTP verification is canceled", Toast.LENGTH_SHORT).show());
 
-        } else Toast.makeText(AuthenticationActivity.this, "Please enter otp", Toast.LENGTH_SHORT).show();
+        } else Toast.makeText(AuthenticationActivity.this, "Please enter otp", Toast.LENGTH_LONG).show();
     }
 
     private Intent createUserDB() {
@@ -148,16 +150,12 @@ public class AuthenticationActivity extends AppCompatActivity {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     haveData = (Boolean) snapshot.getValue();
-                    Log.i("ashis", "in createDB-onSuccess have data =  "+haveData);
-
                     if(haveData == null || !haveData) setDefaultValue(reference); // If there is no haveData object in DB then haveData is not created
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
                     haveData = false;
-                    Log.i("ashis", "in createDB-onFail have data =  "+haveData);
-
                     setDefaultValue(reference);
                 }
             });
@@ -210,7 +208,6 @@ public class AuthenticationActivity extends AppCompatActivity {
 
     @Override
     protected void onRestart() {
-        Log.i("ashis", "onRestart");
         binding.progressbarAuth.setVisibility(View.INVISIBLE);
         super.onRestart();
     }

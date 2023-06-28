@@ -21,7 +21,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageReference;
 import com.kayalprints.mechat.R;
-import com.kayalprints.mechat.classes.MeChatDatabase;
+import com.kayalprints.mechat.classes.AppFirebaseDatabase;
 import com.kayalprints.mechat.classes.Operations;
 import com.kayalprints.mechat.databinding.ActivityProfileBinding;
 
@@ -51,10 +51,10 @@ public class ProfileActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).setTitle("Profile");
         setContentView(binding.getRoot());
 
-        DatabaseReference df = MeChatDatabase.getDatabaseReference();
+        DatabaseReference df = AppFirebaseDatabase.getDatabaseReference();
         if(df != null) databaseReference = df.child("UsersData");
-        storageReference = MeChatDatabase.getStorageReference(); // Can be null
-        user = MeChatDatabase.getCurrentUser(); // Can be null
+        storageReference = AppFirebaseDatabase.getStorageReference(); // Can be null
+        user = AppFirebaseDatabase.getCurrentUser(); // Can be null
 
         userData = new ArrayList<>(3);
 
@@ -69,7 +69,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         binding.signoutlay.setOnClickListener(v -> {
-            MeChatDatabase.getAuth().signOut(); // Null check
+            AppFirebaseDatabase.getAuth().signOut(); // Null check
             setResult(RESULT_OK, new Intent());
             finish();
         });
